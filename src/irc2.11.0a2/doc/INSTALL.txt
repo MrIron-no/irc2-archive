@@ -1,0 +1,1587 @@
+  Installing IRC - The Internet Relay Chat Program
+  SGML version by Christophe Kalt, updated by Piotr Kucharski
+  $Id: INSTALL.txt,v 1.42 2004/02/13 19:08:46 chopin Exp $
+
+  This document describes how to install, and configure IRC 2.11.0.
+
+  [1m1.  Installing IRC.[0m
+
+  [1m1.1.  The configure script[0m
+
+  This package uses a GNU configure script for its configuration.  You
+  simply need to untar the distribution and run the ``configure''
+  script.  This will run configure which will probe your system for any
+  peculiarities it has and setup the Makefile and a file of default
+  #define's ($arch/setup.h).
+
+  There are a few options to ``configure'' to help it out, or change the
+  default behaviour:
+
+     [1m--prefix=DIR[0m
+        changes the default directory into which ircd will install using
+        ``make install''.  This defaults to /usr/local
+
+     [1m--sbindir=DIR[0m
+        changes the default directory where the system admin executable
+        files will go. It is important to set this properly. (default is
+        prefix/sbin)
+
+     [1m--logdir=DIR[0m
+        changes the default directory where the irc log files will go.
+        (default is prefix/var/log/ircd)
+
+     [1m--sysconfdir=DIR[0m
+        changes the default directory where the irc server configuration
+        files will go. (default is prefix/etc)
+
+     [1m--localstatedir=DIR[0m
+        changes the default directory where the irc server state files
+        will go. (default is prefix/var/run)
+
+     [1m--resconf=FILE[0m
+        defines the file to be used by ircd to initialize its resolver.
+        (default is /etc/resolv.conf)
+
+     [1m--zlib-include=DIR[0m
+        specifies in which directory the include file from the zlib is
+        located.
+
+     [1m--zlib-library=DIR[0m
+        specifies in which directory the zlib library is located.
+
+     [1m--zlib-prefix=DIR[0m
+        specifies the prefix for zlib location.  It overrides the 2
+        previous options.  (The include directory is supposed to be in
+        prefix/include, and the library in prefix/lib).
+
+     [1m--with-zlib[0m
+        is the default.  ``configure'' looks on your system to find the
+        zlib.  If found, ircd will be linked using it.  This does NOT
+        mean you can use server link compression, for this you also need
+        to define ZIP_LINKS (see section below).
+
+     [1m--without-zlib[0m
+        tells ``configure'' not to look for the zlib.  Defining this
+        will keep you from using server link compression.
+
+     [1m--enable-ip6[0m
+        Enable IPv6 support (See notes below)
+
+     [1m--enable-dsm[0m
+        Enable Dynamically Shared Modules support for iauth
+
+
+  [1m1.2.  Notes for Cygwin32 users[0m
+
+  The daemon of 2.11.0 release compiles properly on W32 systems which
+  have the GNU-Win32 environment ( <http://www.cygnus.com/misc/gnu-
+  win32/>) setup.  At the time of the release, tests were made using the
+  version b20.1 of the Cygwin32 library.
+
+  When compiling on such system, you want to make sure that you have
+  carefully followed the Cygwin32 installation notes.  In particular,
+  you will need to make sure that the following files exist:
+  [1m/bin/cp.exe[22m, [1m/bin/mv.exe[22m, [1m/bin/rm.exe [22mand [1m/bin/sh.exe[22m.
+
+  Also, the IRC server needs a [1mresolv.conf [22mfile in order to initialize
+  the resolver.  This file can be anywhere (see configure options), and
+  is typically in [1m/etc [22mon UNIX systems.
+
+  Finally, iauth is automatically disabled.  Even though the iauth
+  program compiles properly, extra work is required to have a working
+  communication channel between the IRC server and the iauth program.
+
+
+  [1m1.3.  Notes concerning IPv6 support[0m
+
+  The only part of the software that doesn't use IPv6 is the server
+  internal resolver.  It relies on the name servers defined in
+  ``/etc/resolv.conf'' to be IPv4 addresses.
+
+  This version was tested on the following IPv6 systems: BSD/OS+KAME,
+  Digital Unix, FreeBSD+KAME, Linux, NetBSD+INRIA.
+
+  Because IPv6 numeric addresses contain ``:'' characters, [1mthe default[0m
+  [1mseparator for the server configuration file was changed to ``%''[22m.
+
+
+  [1m2.  The config.h file[0m
+
+  The second step consists of defining options before the compilation.
+  This is done by editing the ``config.h'' file and changing the various
+  #DEFINE's.
+
+
+  [1m2.1.  DEBUGMODE[0m
+
+  [1mThis should only be defined for test purposes, and never used on a[0m
+  [1mproduction server.[0m
+
+  Define DEBUGMODE if you want to see the ircd debugging information as
+  the daemon is running. Normally this function will be undefined as
+  ircd produces a considerable amount of output.  DEBUGMODE must be
+  defined for either of -t or -x command line options to work.  Defining
+  this induces a large overhead for the server as it does a large amount
+  of self diagnostics whilst running.
+
+
+  [1m2.2.  CACHED_MOTD[0m
+
+  The server sends the ``motd'' to every client connecting.  Every time,
+  it reads it from the disk.  This is quite intensive and can be
+  undesirable for busy servers.
+  Defining CACHED_MOTD will make the server store the ``motd'' in
+  memory, and only read it again from the disk when rehashing if the
+  file has changed.
+
+
+  [1m2.3.  CHROOTDIR[0m
+
+  To use the CHROOTDIR feature, make sure it is #define'd and that the
+  server is being run as root. Better use some other (external) way of
+  setting up chroot environment for ircd and run it from there, not
+  requiring to run as root.
+
+
+  [1m2.4.  ENABLE_SUMMON, ENABLE_USERS[0m
+
+  For security conscious server admins, they may wish to leave
+  ENABLE_USERS undefined, disabling the USERS command which can be used
+  to glean information the same as finger can.  ENABLE_SUMMON toggles
+  whether the server will attempt to summon local users to irc by
+  writing a message similar to that from talk(1) to a user's tty.
+
+
+  [1m2.5.  SHOW_INVISIBLE_LUSERS, NO_DEFAULT_INVISIBLE[0m
+
+  On large IRC networks, the number of invisible users is likely to be
+  large and reporting that number cause no pain.  To aid and effect
+  this, SHOW_INVISIBLE_LUSERS is provided to cause the LUSERS command to
+  report the number of invisible users to all people and not just
+  operators.  The NO_DEFAULT_INVISIBLE define is used to toggle whether
+  clients are automatically made invisible when they register.
+
+
+  [1m2.6.  OPER_KILL, OPER_REHASH, OPER_RESTART, OPER_SET, LOCAL_KILL_ONLY[0m
+
+  The three operator only commands, KILL, REHASH, RESTART and SET, may
+  all be disabled to ensure that an operator who does not have the
+  correct privilidges does not have the power to cause untoward things
+  to occur. To further curb the actions of guest operators,
+  LOCAL_KILL_ONLY can be defined to only allow locally connected clients
+  to be KILLed.
+
+
+  [1m2.7.  ZIP_LINKS, ZIP_LEVEL[0m
+
+  As of the 2.9.3 version of the server, server-server connections may
+  be compressed using the zlib.  In order to compile the server with
+  this feature, you MUST have the zlib package (version 1.0 or higher)
+  already compiled and define ZIP_LINKS in the config.h file.
+  Compression use for server-server connections is separately configured
+  in the ircd.conf file for each server-server link.  ZIP_LEVEL allows
+  you to control the compression level that will be used.  Values above
+  5 will noticeably increase the CPU used by the server.
+
+  The zlib package may be found at
+  <http://www.cdrom.com/pub/infozip/zlib/>. The data format used by the
+  zlib library is described by RFCs (Request for Comments) 1950 to 1952
+  in the files  <ftp://ds.internic.net/rfc/rfc1950.txt> (zlib format),
+  rfc1951.txt (deflate format) and rfc1952.txt (gzip format). These
+  documents are also available in other formats from
+  <ftp://ftp.uu.net/graphics/png/documents/zlib/zdoc-index.html>
+
+
+  [1m2.8.  SLOW_ACCEPT[0m
+
+  This option is undefined by default, however is needed on some OSes.
+  It creates an artificial delay in processing incoming connections.  On
+  a given port, no more than 1 connection per 2 seconds will be
+  processed.
+
+  As it is undefined, it lets the server process connections as fast as
+  it can which can cause problems on some OSes (such as SunOS) and be
+  abused (fast massive join of clonebots..), for these reasons, if you
+  decide to keep SLOW_ACCEPT undefined you MUST define CLONE_CHECK.
+
+
+  [1m2.9.  CLONE_CHECK[0m
+
+  This option is defined by default and acts as a wrapper, by checking
+  incoming connections early before starting ident query.  By default,
+  the server will not accept more than 10 connections from the same host
+  within 2 seconds.
+
+
+  [1m2.10.  Other #define's[0m
+
+  The rest of the user changable #define's should be pretty much self
+  explanatory in the config.h file.  It is *NOT* recommended that any of
+  the file undef the line with "STOP STOP" in it be changed.
+
+
+  [1m3.  Editing the Makefile, and compiling[0m
+
+  This package now uses GNU autoconf to probe your system and generate
+  the correct Makefile.  However you may need to read it to check for
+  values generated by the configure script.  In particular, all the
+  filenames, and path for binaries, log files, configuration files and
+  so on are defined there.  It is recommended to make use of the options
+  described in the ``configure script'' section rather than to edit the
+  generated Makefile.  However, these options do not provide a total
+  control over these values, in which case you need to directly edit the
+  Makefile.
+
+  Now to build the package, type ``make all''.  If everything goes will,
+  you can then install it by typing ``make install''.
+
+  If you have trouble compiling ircd, copy Makefile.in to Makefile and
+  edit Makefile as appropriate.
+
+
+  [1m4.  The ircd.conf file[0m
+
+  After installing the ircd and irc programs, edit the ircd.conf file as
+  per the instructions in this section and install it in the location
+  you specified in the config.h file.  There is a sample conf file
+  called example.conf in the doc/ directory.
+
+  Appendix A (See INSTALL.appendix) describes the differences between IP
+  addresses and host names.  If you are unfamiliar with this, you should
+  probably scan through it before proceeding.
+
+  The ircd.conf file contains various records that specify configuration
+  options.  The record types are as follows:
+
+  1. Machine information   (M)
+
+  2. Administrative info   (A)
+
+  3. Port connections      (P)
+
+  4. Connection Classes    (Y)
+
+
+  5. Client connections    (I,i)
+
+  6. Operator privileges   (O,o)
+
+  7. Excluded accounts     (K,k)
+
+  8. Server connections    (C,c,N)
+
+  9. Deny auto-connections (D)
+
+  10.
+     Hub connections       (H)
+
+  11.
+     Leaf connections      (L)
+
+  12.
+     Version limitations   (V)
+
+  13.
+     Excluded machines     (Q)
+
+  14.
+     Service connections   (S)
+
+  15.
+     Bounce server         (B)
+
+  Except for types ``M'' and ``A'', you are allowed to have multiple
+  records of the same type.  In some cases, you can have concurrent
+  records.  [1mIt is important to note that the last matching record will[0m
+  [1mbe used[22m.  This is especially useful when setting up I records (client
+  connections).
+
+
+  [1m4.1.  Machine information[0m
+
+
+     [1mIntroduction[0m
+        IRC needs to know a few things about your UNIX site, and the
+        ``M'' command specifies this information for IRC.  The fomat of
+        this command is:
+
+     [1mFormat[0m
+
+        M:<Server NAME>:<YOUR Internet IP#>:<Geographic Location>:<Port>:<SID>
+
+
+
+     [1mM  [22m``M'' specifies a Machine description line
+
+     [1mServer NAME[0m
+        The name of YOUR server adding any Internet DOMAINNAME that
+        might also be present. If this hostname can be resolved, the IP#
+        found will be used to for outgoing connections.  Otherwise the
+        default interface address of the host is used.  The server name
+        may not be FQDN of another host.  (This means all outgoing
+        connections will be done from the same IP#, even if your host
+        has several IP#).
+
+     [1mYOUR Internet IP#[0m
+        If the machine on which you run the server has several IP
+        addresses, you can define which IP# to use for outgoing
+        connections.  This overrides overrides the ``Server NAME''.
+
+        See Also the ``Port Connections'' and ``Server Connections''
+        sections.
+
+     [1mGeographic Location[0m
+        Geographic Location is used to say WHERE YOUR SERVER is, and
+        gives people in other parts of the world a good idea of where
+        you are!  If your server is in the USA, it is usually best to
+        say: <CITY> <STATE>, USA.  Like for Denver I say: ``Denver
+        Colorado, USA''.  Finnish sites (like tolsun.oulu.fi generally
+        say something like ``Oulu, Finland''.
+
+     [1mPort[0m
+        Defines the port on which your server will listen for UDP pings
+        from other servers.  This should be the port were other servers
+        are set to autoconnect.  (Also see the port field description in
+        connect lines).
+
+     [1mSID[0m
+        Defines Server ID, network-wide unique identifier of your
+        server. It must begin with a digit. This must be set with
+        cooperation of other servers' admins. On IRCnet you must consult
+        your coord and/or admins of your peers.
+
+     [1mExample:[0m
+        M:tolsun.oulu.fi::Oulu, Finland:6667:00PA
+
+        This line reads: My Host's name is ``tolsun.oulu.fi'', my site
+        is located in ``Oulu, Finland'' and my SID is ``00PA''.
+
+        M:orion.cair.du.edu::Denver Colorado, USA:6667:00PS
+
+        This line reads: My Hosts name is ``orion.cair.du.edu'', my site
+        is located in ``Denver Colorado, USA'' and my SID is ``00PS''.
+
+
+
+  [1m4.2.  Administrative info[0m
+
+
+     [1mIntroduction[0m
+        The ``A'' line is used for administrative information about a
+        site. The e-mail address of the person running the server should
+        be included here in case problems arise.
+
+     [1mFormat[0m
+
+        A:<Your Name/Location>:<Your E-Mail Addr>:<other>::<network name>
+
+
+
+     [1mA  [22mThis specifies an Admin record.
+
+     [1mYour Name & Location[0m
+        Use this field to say tell your FULL NAME and where in the world
+        your machine is.  Be sure to add your City, State/Province and
+        Country.
+
+     [1mYour Electronix Mailing Addr[0m
+        Use this field to specify your Electronic Mailing Address
+        preferably your Internet Mailing Address.  If you have a UUCP or
+        ARAPnet address - please add that as well.  Be sure to add any
+        extra DOMAIN information that is needed, for example ``mail
+        jtrim@orion'' probably won't work as a mail address to me if you
+        happen to be in Alaska.  But ``mail jtrim@orion.cair.du.edu''
+        would work because you know that ``orion'' is part of the DOMAIN
+        ``cair.du.edu''.  So be sure to add your DOMAINNAMES to your
+        mailing addresses.
+     [1mOther[0m
+        This is really an OTHER field - you can add what you want here.
+
+     [1mNetwork name[0m
+        Use this field to announce your network name in 005 numerics.
+        Use only one word!
+
+     [1mExample[0m
+        (the line is just one line in the confuration file, here it is
+        cut into two lines to make it clearer to read):
+
+        A:Jeff Trim -  Denver Colorado, USA:INET jtrim@orion.cair.du.edu
+        UUCP {hao,isis}!udenva!jtrim:Terve! Heippa!  Have you said hello
+        in Finnish today?;)::IRCnet
+
+        Would look like this when printed out with the /admin command:
+
+        Jeff Trim -  Denver Colorado, USA INET jtrim@orion.cair.du.edu
+        UUCP {hao,isis}!udenva!jtrim Terve! Hei! Heippa!  Have you said
+        hello in Finnish today? ;)
+
+
+        Note that the A record cannot be split across multiple lines; it
+        will typically be longer than 80 characters and will therefore
+        wrap around the screen.
+
+
+  [1m4.3.  Port connections[0m
+
+
+     [1mIntroduction[0m
+        The port line adds flexibility to the server's ability to accept
+        connections. By use of this line in the ircd.conf file, it is
+        easy to setup both Unix Domain ports for the server to accept
+        connections on as well as extra internet ports.
+
+     [1mFormat[0m
+
+        P:<Internet IP#>:<*>::<Port>:
+        P:<Directory>:<*>:<*>:<Port>:
+
+
+
+  +o  Internet Ports
+
+     [1mInternet IP#[0m
+        If the host on which the server runs has several IP addresses,
+        you can define for which IP address connections will be
+        accepted. If none is defined here, server will bind to all
+        interfaces (INADDR_ANY).  See also [1mMachine configuration [22mand
+        [1mServer Connections [22msections to properly configure outgoing
+        connections.
+
+        P:192.168.1.194:::6664:
+
+     [1mPort[0m
+        The port number field tells the server which port number it
+        should listen on for incoming connections.
+
+  +o  Unix Socket Ports.
+
+     [1mDirectory[0m
+        The path set in this field should be the directory name in which
+        to create the unix socket for later listening to. The server
+        will attempt to create the directory before creating the unix
+        socket.
+
+     [1mPort[0m
+        The port field when used in combination with a pathname in a P-
+        line is the filename created in the directory set in the first
+        field.
+
+     [1mExample[0m
+        P:/tmp/.ircd:::6667:
+
+        Creates a unix socket in the /tmp/.ircd directory called
+        ``6667''. The unix socket (file) must be a numerical.
+
+
+     [1mNote[0m
+        You need at least one P line or server won't start.  (Unless you
+        run it from inetd.)
+
+
+  [1m4.4.  Connection Classes[0m
+
+
+     [1mIntroduction[0m
+        To enable more efficient use of MAXIMUM_LINKS, connection
+        classes were implemented.  All clients belong to a connection
+        class.
+
+        Each line for a server should have the same number as the sixth
+        field.  If it is absent, the server deaults it to 0, using the
+        defaults from the config.h file.
+
+        To define a connection class, you need to include a Y: line in
+        the ircd.conf file.  This enables you to define the ping
+        frequency, connection frequency (for servers) and maximum number
+        of links that class should have.
+
+        Currently, the Y: line [1mMUST [22mappear in the ircd.conf file [1mBEFORE[0m
+        it is used in any other way.
+
+     [1mFormat[0m
+
+        Y:<Class>:<Ping Freq>:<Connect Freq>:<Max Links>:<SendQ>:<Local Limit>:<Global Limit>
+
+
+
+     [1mY  [22mThis specifies a Class record.
+
+     [1mClass[0m
+        This is the class number which gains the following attributes
+        and should match that which is on the end of the C/c/N/I/O/S
+        line.
+
+     [1mPing Frequency[0m
+        This field defines how long the server will let the connection
+        remain ``silent'' before sending a PING message to make sure it
+        is still alive.  Unless you are sure of what you are doing, use
+        the default value which is in your config.h file.
+
+     [1mConnect Frequency[0m
+        By changing this number, you change how often your server checks
+        to see if it can connect to this server. If you want to check
+        very occasionally, use a large value, but if it is an important
+        connection, you might want a smaller value so that you
+        autoconnect to it as soon as possible.
+
+
+     [1mMax Links[0m
+        This field defines the maximum number of links this class will
+        allow from automatic connections (C lines).  Using /CONNECT
+        overrides this feature.  Also defines the maximum number of
+        users in this class for I/O lines per I/O line.
+
+     [1mSendQ[0m
+        This field defines the ``SendQ'' value for this class.  If this
+        field is not present, the default (from config.h) is assigned.
+
+     [1mLocal limit[0m
+        This field is used to limit the number of local concurrent
+        connections.  The format is <x>.<y>
+
+        +o  x: defines the maximum number of clients from the same host
+           (IP) will be allowed.
+
+        +o  y: defines the maximum number of clients from the same
+           user@host (IP) will be allowed.  Read note below.
+
+        Any unset value defaults to 1 (one).
+
+     [1mGlobal limit[0m
+        This field has the same use as the ``Local limit'' field.  But,
+        the connection counts are done for all clients present on the
+        net instead of only counting local clients.
+
+     [1mNote[0m
+        leaving any of the fields (except SendQ and limits) out means
+        their value is 0 (ZERO)!!  The SendQ field default value is
+        dynamically determined. Limits default to 1.1 (one connection).
+
+     [1mNote[0m
+        If you plan to use the local user@host limit, please read the
+        following very carefully.  The ``user'' value is the ident reply
+        for the connection.  If no reply was given then it defaults to
+        ``unknown'' and thus the effective limit will be per host, not
+        per user@host. Also, some ident servers return encrypted data
+        which changes for every connection making the limit void.
+
+     [1mNote[0m
+        Only the local limitation is accurate.
+
+     [1mNote[0m
+        If you define a gobal limit, you should also define a local
+        limit (same or lower) as it won't take more CPU and will make
+        the global limit more accurate.
+
+     [1mNote[0m
+        The local and global limits only affect users (I lines), not
+        servers nor services.
+
+     [1mExample[0m
+        Y:23:120:300:5:800000:0:0: (server class)
+
+        This defines class 23 to allow 5 auto-connections, which are
+        checked every 300 seconds.  The connection is allowed to remain
+        silent for 120 seconds before a PING is sent.  NOTE: fields 3 &
+        4 are in seconds.  The SendQ is set to 800000 bytes.
+
+        Y:1:60:0:50:20000:2:5: (client class)
+
+        In case of a client class, the fields are interpreted a bit
+        differently.  This class (number 1) can be used by up to 50
+        users.  The connections are allowed to remain silent for 60
+        seconds before a PING is set.  The SendQ is set to 20000 bytes.
+        A new connection in this class will only be allowed if there
+        aren't more than 2 other local connections from the same IP
+        address, or more than 5 other connections on the net from the
+        same hostname.
+
+        Y:2:60:0:50:20000:2.1:5: (client class)
+
+        In case of a client class, the fields are interpreted a bit
+        differently.  This class (number 1) can be used by up to 50
+        users.  The connections are allowed to remain silent for 60
+        seconds before a PING is set.  The SendQ is set to 20000 bytes.
+        A new connection in this class will only be allowed if there
+        aren't more than 2 other local connections from the same IP
+        address, 1 local connection from the same user from the same IP
+        address, or more than 5 other connections on the net from the
+        same hostname.
+
+
+  [1m4.5.  Client connections[0m
+
+  How to let clients connect to your IRCD.
+
+     [1mIntroduction[0m
+        A client is a program that connects to the ircd daemon (ircd).
+        There are clients written in C, GNU Emacs Lisp and many other
+        languages.  The ``irc'' program is the C client.  Each person
+        that talks via IRC is running their own client.
+
+        The ircd.conf files contains entries that specify which clients
+        are allowed to connect to your irc daemon.  Obviously you want
+        to allow your own machine's clients to connect.  You may want to
+        allow clients from other sites to connect.  These remote clients
+        will use your server as a connection point.  All messages sent
+        by these clients will pass through your machine.
+
+     [1mFormat[0m
+
+        I:<TARGET Host Addr>:<Password>:<TARGET Hosts NAME>:<Port>:<Class>:<Flags>
+
+
+
+     [1mNote[0m
+        Lower case ``i'' is equal to an ``R'' flag in plain ``I''.
+
+     [1mTARGET Host Addr[0m
+        Specifies the IP address(es) of the machine(s) that are allowed
+        to connect.  If ``user@'' prefixes the actual IP address the
+        server will require that the remote username returned by the
+        ident server be the same as the one given before the ``@''.
+        Wildcards are permitted unless using a bitmask (e.g.
+        1.2.3.0/24). Note that bitmask are encouraged over wildcards, as
+        they are more accurate.
+
+     [1mPassword[0m
+        The password that must be given by the client to be allowed on
+        the server.
+
+     [1mTARGET Host NAME[0m
+        Specifies the host name(s) of the machines allowed to connect to
+        the server.  If ``user@'' prefixes the actual IP address the
+        server will require that the remote username returned by the
+        ident server be the same as the one given before the ``@''.
+        Wildcards are permitted, but [1mplease [22mrather leave this field
+        empty and use bitmask in [1mHost Addr [22mfield.
+
+        This field can be empty, it then has a special meaning.  See
+        below.
+
+        Using this field to enforce that clients have no Host Name set
+        is obsolete, see ``N'' [1mflag[22m.
+
+     [1mPort[0m
+        Specifies the port number for which this configuration line is
+        valid.  An empty field, or ``0'' matches all ports.
+
+     [1mClass[0m
+        This field should refer to an existing class.  Connections
+        classes are usefull to limit the number of users allowed on the
+        server.
+
+     [1mFlags[0m
+        This field contains flags of an I:line; flags are one character
+        in size, can be combined and their order does not matter.
+
+        +o  R - restricted
+
+        +o  D - restricted, when client has no reverse DNS
+
+        +o  I - restricted, when client has no ident.
+
+        +o  E - client is exempted from K: lines
+
+        +o  N - do not show resolved hostname (bans still match)
+
+        +o  F - fall-through to next I:line if password not matched
+
+     [1mNote[0m
+        Restricted I: line means that clients matching such I line will
+        not be able to use their operator privileges (no nick/mode
+        change, no kick). Such users will also have their username
+        prefixed by +, = or - depending on the ident reply.
+
+     [1mNote[0m
+        The server first checks if the client hostname (or any aliases)
+        matches the [1mTARGET Host NAME [22mfield.  If a match is found, the
+        client is accepted.  If not, the server checks if the IP address
+        of the client matches the [1mTARGET Host Addr [22mfield.  The matching
+        field is used to set the name of the client: for example, if the
+        client matches the [1mTARGET Host Addr [22mfield, it will show on IRC
+        with a numerical address (even if this address is resolvable).
+        If the [1mTARGET Host NAME [22mfield is empty, then the host name is
+        always used (when available).
+
+     [1mExamples[0m
+        For example, if you were installing IRC on tolsun.oulu.fi and
+        you wanted to allow examples sake let us assume you were making
+        this file for tolsun and you wanted to let your own clients to
+        connect to your server, you would add this entry to the file:
+
+        I:::tolsun.oulu.fi::1
+
+        If you wanted to let remote clients connect, you could add the
+        following lines:
+
+        I:::*.edu.edu::1
+
+        Allow any clients from machines whose names end in ``.edu.edu''
+        to connect with no password.
+
+        I:128.214.6.100::nic.funet.fi::1
+
+        Allow clients from a machine with that IP number to connect.
+        Numeric match is enough, name is not required anymore.
+
+        I::secret:*.tut.fi::1
+
+        Allow clients from machines matching ``*.tut.fi'' to connect
+        with the password ``secret''.
+
+        I:::*::1
+
+        Allow anyone from anywhere to connect your server.
+
+        This is the easiest way, but it also allows people to for
+        example dump files to your server, or connect 1000 (or how many
+        open sockets per process your OS allows) clients to your machine
+        and take your network ports. Of course the same things can be
+        done by simply telnetting to your machine's SMTP port (for
+        example).
+
+        I:::*.fi:6667:1
+
+        Allow clients from machines matching ``*.fi'' to connect on the
+        port 6667.
+
+        I:135.11.35.0/24::*.net::1
+
+        Allows clients from machines which host name matches ``*.net''
+        or which IP address is within block ``135.11.35.0/24'' to
+        connect to the server.  If the host name does not match
+        ``*.net'' then the IP address is used for these clients, even if
+        the host name is known.
+
+        I:135.11.35.0/24::::1
+
+        Allows clients from machines which IP address is within block
+        ``135.11.35.0/24'' to connect to the server.  If the host name
+        is known, is it used as address for these clients.
+
+        tag/NEW!!!/ As of the 2.11.0 version of the server, I: line
+        flags are introduced.
+
+
+  [1m4.6.  Operator priviliges[0m
+
+  How to become the IRC administrator on your site
+
+     [1mIntroduction[0m
+        To become an IRC Administrator, IRC must know who is authorized
+        to become an operator and what their ``Nickname'' and
+        ``Password'' is.
+
+     [1mFormat[0m
+
+        O:<TARGET Host NAME>:<Password>:<Nickname>:<Port>:<Class>
+
+
+
+     [1mO  [22mSpecifies Operator record.
+
+     [1mNote[0m
+        If you use small letter (``o'') in it, it specifies a global
+        operator. Capital letter (``O'') specifies a local operator.
+        Local operator has basically the same rights except global
+        operator with some restrictions.
+
+     [1mTARGET Host NAME[0m
+        Tells IRC which host you have the privileges FROM.  This means
+        that you should be logged into this host when you ask for the
+        priviliges.  If you specify ``tolsun.oulu.fi'' then IRC will
+        expect your CLIENT to be connected at ``tolsun.oulu.fi'' - when
+        you ask for OPERATOR privileges from ``tolsun.oulu.fi''.  You
+        cannot be logged in at any other host and be able to use your
+        OPERATOR privileges at tolsun, only when you are connected at
+        TOLSUN will this work - this is a safeguard against unauthorized
+        sites.
+
+     [1mPassword[0m
+        If your AUTHORIZATION Password - this is the password that let's
+        IRC know you are who you say you are!  Never tell anyone your
+        password and always keep the ``ircd.conf'' file protected from
+        all of the other users.
+
+     [1mNickname[0m
+        The Nickname you usually go by - but you can make this what you
+        want.
+
+     [1mPort[0m
+        Unused.
+
+     [1mClass[0m
+        The class field should refer to an existing class (preferably
+        having a lower number than that for the relevant I-line) and
+        determines the maximum number of simultaneous uses of the O-line
+        allowable through the max. links field in the Y-line.
+
+     [1mExample[0m
+        o:orion.cair.du.edu:pyunxc:Jeff::1
+
+        There is an OPERATOR at ``orion.cair.du.edu'' that can get
+        Operator priviliges if he specifies a password of ``pyunxc'' and
+        uses a NICKNAME of ``Jeff''.
+
+     [1mNote[0m
+        Host NAME accepts IP bitmasks.
+
+
+  [1m4.7.  Excluded accounts[0m
+
+  Remove an errant user from IRC on your site.
+
+     [1mIntroduction[0m
+        Obviously it is hoped that you wouldn't have to use this
+        command.  Unfortunately sometimes a user can become unmanageable
+        and this is your only recourse - the KILL USER command.  THIS
+        COMMAND ONLY AFFECTS YOUR SERVER - If this user can connect to
+        another SERVER somewhere else in the IRC-Network then you would
+        have to talk to the administrator on that site to disable his
+        access from that IRCD Server as well.
+
+     [1mFormat[0m
+
+        K:<Host Name>:<time interval(s)|comment>:<User>:<port>:
+        k:<Host Name>:<time interval(s)|comment>:<Auth>:<port>:
+
+
+
+     [1mK  [22m``K'' tells the IRCD that you are making a KILL USER command
+        entry.
+
+     [1mHost Name[0m
+        In this field you specify the Hostname or the IP address (Single
+        IP, Wildcard notation or bitmask notation) that the user is
+        connecting from.  If you wanted to REMOVE connects to IRC from
+        ``orion.cair.du.edu'' then you would want to enter
+        ``orion.cair.du.edu''.  If you want to REMOVE ALL HOSTS access
+        you can use ``*'' (Wild Card notation) and no matter what host
+        the USERNAME (specified in Field 4) connects from s/he will be
+        denied access.
+
+        If you specify an IP address, IP mask, or an IP bitmask, it will
+        match clients connecting from the matching addresses, no matter
+        if they resolve or not.
+
+        You can prefix an IP address, an IP mask, or IP bitmask by ``=''
+        in which case only non resolving matching hosts will be banned.
+
+     [1mtime interval(s)|comment[0m
+        Either leave this field empty or put a comment, then the line
+        active continuously for the specified user/host machine.  You
+        may also specify intervals during the line should be active, see
+        examples below.
+
+     [1mUser[0m
+        The USERNAME of the user you want removed from IRC.  For example
+        ``root''.
+
+     [1mAuth[0m
+        If the user's ident server replies with the OTHER type (as
+        opposed to the UNIX type), the reply is not used to set the
+        user's username.  (lowercase) k lines can be used in these case
+        to reject users based on their ident reply.
+
+        This field will be matched against the ident server reply.  It
+        is important to note that OTHER replies are prefixed with a
+        ``-'' by the ircd, while UNIX replies are not.
+
+     [1mPort[0m
+        The port on which the Kill line will be effective. 0 means all
+        ports.
+
+     [1mExamples[0m
+        K:orion.cair.du.edu::jtrim:0:
+
+
+        If user ``jtrim'' connects to IRC from host
+        ``orion.cair.du.edu'' then IMMEDIATELY REMOVE HIM from my IRCD.
+
+        k:*.stealth.net::-43589:0:
+
+        If a user connects from any host that has the suffix
+        ``stealth.net'' and if that host ident server returns ``-43589''
+        - then IMMEDIATELY REMOVE THEM from my IRCD.
+
+        K:*.cair.du.edu::root:0:
+
+        If user ``root'' connects to IRC from any host that has the
+        suffix ``cair.du.edu'' - then IMMEDIATELY REMOVE THEM from my
+        IRCD.
+
+        K:*::vijay:0:
+
+        This line reads ``I don't care WHAT HOST user ``vijay'' is on, I
+        will NEVER allow username ``vijay'' to login to my IRCD.''
+
+        K:*.oulu.fi:0800-1200,1400-1900:*:0:
+
+        This disallows all users from hosts with enddomain ``oulu.fi''
+        access to your server between 8 and 12am, 2 and 7pm. Users get
+        kicked off if they're already signed on when the line becomes
+        active (they'll get a warning 5 minutes before). Note that this
+        requires ircd to be compiled with proper #define!
+
+        K:192.11.35.0/24::*:0:
+
+        This line disallows all hosts whose IP address is from network
+        ``192.11.35.0/24'' to login to the ircd.
+
+        K:=192.11.35.0/24::*:0:
+
+        This line disallows all hosts whose IP address is from network
+        ``192.11.35.0/24'' and which didn't resolve to login to the
+        ircd.
+
+
+  [1m4.8.  Server connections[0m
+
+  How to connect to other servers, How other servers can connect to you
+
+  [1mWARNING: [22mThe hostnames used as examples are really only examples and
+  not meant to be used (simply because they don't work) in real life.
+
+
+  Now you must decide WHICH hosts you want to connect to and WHAT ORDER
+  you want to connect to them in.  For my example let us assume I am on
+  the machine "rieska.oulu.fi" and I want to connect to irc daemons on 3
+  other machines:
+
+  +o  ``garfield.mit.edu''        - Tertiary Connection
+
+  +o  ``irc.nada.kth.se''         - Secondary Connection
+
+  +o  ``nic.funet.fi''            - Primary Connection
+
+
+  And I prefer to connect to them in that order, meaning I first want to
+  try connecting to ``nic.funet.fi'', then to ``irc.nada.kth.edu'', and
+  finally to ``garfield.mit.edu''.  So if ``nic.funet.fi'' is down or
+  unreachable, the program will try to connect to ``irc.nada.kth.se''.
+  If irc.nada.kth.se is down it will try to connect to garfield and so
+  forth.
+
+  PLEASE limit the number of hosts you will attempt to connect to down
+  to 3. This is because of two main reasons:
+
+  1. to save your server from causing extra load and delays to users
+
+  2. to save internet from extra network traffic (remember the old rwho
+     program with traffic problems when the number of machines
+     increased).
+
+
+     [1mFormat[0m
+
+        C:<TARGET Host Addr>:<Password>:<TARGET Host NAME>:<TARGET PORT>:<Class>:<Source IP>
+
+
+
+     for example:
+
+     C:nic.funet.fi:passwd:nic.funet.fi:6667:1
+
+     - or -
+
+     C:128.214.6.100:passwd:nic.funet.fi:6667:1
+
+     - or -
+
+     C:root@nic.funet.fi:passwd:nic.funet.fi:6667:1
+
+
+     [1mC  [22mThis field tells the IRC program which option is being
+        configured. "C" corresponds to a server Connect option.
+
+     [1mTARGET Host Addr[0m
+        Specifies the host name or IP address of the machine to connect
+        to.  If ``user@'' prefixes the actual hostname or IP address the
+        server will require that the remote username returned by the
+        ident server be the same as the one given before the ``@''.
+
+     [1mPassword[0m
+        The password of the other host.  A password must always be
+        present for the line to be recognized.
+
+     [1mTARGET Host NAME[0m
+        The full hostname of the target machine. This is the name that
+        the TARGET server will identify itself with when you connect to
+        it.  If you were connecting to nic.funet.fi you would receive
+        ``nic.funet.fi'' and that is what you should place in this
+        field.
+
+     [1mTARGET PORT[0m
+        The INTERNET Port that you want to connect to on the TARGET
+        machine. Most of the time this will be set to ``6667''.  If this
+        field is left blank, then no connections will be attempted to
+        the TARGET host, and your host will accept connections FROM the
+        TARGET host instead.  The port field can contain 2 ports,
+        separated by a . In this case, the first port is used when auto-
+        connecting, the second port is used for the UDP pings to the
+        targer server.
+
+     [1mClass[0m
+        The class field should refer to an existing class and determines
+        the maximum number of simultaneous uses of the C-line allowable
+        through the max. links field in the Y-line.
+
+     [1mSource IP[0m
+        This field specifies source IP to use for connects to this
+        server.
+
+     [1mNEW!!![0m
+        As of the 2.9.3 version of the server, server connections can be
+        compressed with the zlib library.  To define a compressed
+        connection, you must have compiled the server with ZIP_LINKS
+        defined, and use a _lowercase_ C line.
+
+     [1mNEW!!![0m
+        As of the 2.11.0 version of the server, [1mSource IP [22mfield has been
+        added.
+
+  Some examples:
+
+  +o  C:nic.funet.fi::nic.funet.fi:6667:1
+
+     This reads: Connect to host ``nic.funet.fi'', with no password and
+     expect this server to identify itself to you as ``nic.funet.fi''.
+     Your machine will connect to this host to port 6667.
+
+  +o  C:18.72.0.252:Jeff:garfield.mit.edu:6667:1:192.168.0.18
+
+     This reads: Connect to a host at address ``18.72.0.252'', using a
+     password of ``Jeff''.  The TARGET server should identify itself as
+     ``garfield.mit.edu''.  You will connect to Internet Port 6667 on
+     this host. This connection will use (your) source IP of
+     ``192.168.0.18''.
+
+  +o  C:irc.nada.kth.se::irc.nada.kth.se:1
+
+     This reads: do not attempt to autoconnect to ``irc.nada.kth.se'',
+     but if ``irc.nada.kth.se'' requests a connection, allow it to
+     connect.
+
+  Now back to our original problem, we wanted OUR server CONNECT to 3
+  hosts,  ``nic.funet.fi'', ``irc.nada.kth.se'' and ``garfield.mit.edu''
+  in that order.  So as we enter these entries into the file they must
+  be done in [1mreverse [22morder of how we could want to connect to them.
+
+  Here's how it would look if we connected ``nic.funet.fi'' first:
+
+  C:garfield.mit.edu::garfield.mit.edu:6667:1
+  C:irc.nada.kth.se::irc.nada.kth.se:6667:1
+  C:nic.funet.fi::nic.funet.fi:6667:1
+
+  Ircd will attempt to connect to nic.funet.fi first, then to irc.nada
+  and finally to garfield.
+
+  [1mReciprocal entries: [22mEach ``C'' entry requires a corresponding ``N''
+  entry that specifies connection priviliges to other hosts.  The ``N''
+  entry contains the password, if any, that you require other hosts to
+  have before they can connect to you.  These entries are of the same
+  format as the ``C'' entries.
+
+
+
+     [1mFormat[0m
+        The format for the NOCONNECT entry in the ``ircd.conf'' is:
+
+        N:<TARGET Host Addr>:<Password>:<TARGET Host NAME>:<Domain Mask>:<Class>
+
+
+
+     Let us assume that ``garfield.mit.edu'' connects to your server and
+     you want to place password authorization authorization on garfield.
+     The ``N'' entry would be:
+
+     N:garfield.mit.edu:golden:garfield.mit.edu::
+
+     This line says: expect a connection from host ``garfield.mit.edu'',
+     and expect a login password of ``golden'', and expect the host to
+     identify itself as ``garfield.mit.edu''.
+
+     N:18.72.0.252::garfield.mit.edu::
+
+     This line says: expect a Connection from host ``18.72.0.252'', and
+     don't expect login password.  The connecting host should identify
+     itself as ``garfield.mit.edu''.
+
+     [1mN  [22m``N'' corresponds to a server Noconnect option.
+
+     [1mTARGET Host Addr[0m
+        Specifies the host name or IP address of the machine to connect
+        to.  If ``user@'' prefixes the actual hostname or IP address the
+        server will require that the remote username returned by the
+        ident server be the same as the one given before the ``@''.
+
+     [1mPassword[0m
+        The password of the other host.  A password must always be
+        present for the line to be recognized. If CRYPT_LINK_PASSWORD is
+        defined in config.h, this password must be crypted.
+
+     [1mTARGET Host NAME[0m
+        The full hostname of the target machine. This is the name that
+        the TARGET server will identify itself with when you connect to
+        it.  If you were connecting to nic.funet.fi you would receive
+        ``nic.funet.fi'' and that is what you should place in this
+        field.
+
+     [1mDomain Mask[0m
+        Domain masking, see below.
+
+     [1mClass[0m
+        The class field should refer to an existing class.
+
+     [1mWildcards domains[0m
+        To reduce the great amount of servers in IRCnet wildcard DOMAINS
+        were introduced in 2.6. To explain the usage of wildcard domains
+        we take an example of such:
+
+        *.de  - a domain name matching all machines in Germany.
+
+        Wildcard domains are useful in that ALL SERVERS in Germany (or
+        any other domain area) can be shown as one to the rest of the
+        world. Imagine 100 servers in Germany, it would be incredible
+        waste of network bandwidth to broadcast all of them to all
+        servers around the world.
+
+        So wildcard domains are a great help, but how to use them ?
+
+        They can be defined in the N-line for a given connection, in
+        place of ``Domain Mask'' you write a magic number called
+        wildcard count.
+
+        Wildcard count tells you HOW MANY PARTS of your server's name
+        should be replaced by a wildcard. For example, your server's
+        name is ``tolsun.oulu.fi'' and you want to represent it as
+        ``*.oulu.fi'' to ``nic.funet.fi''. In this case the wildcard
+        count is 1, because only one word (tolsun) is replaced by a
+        wildcard.
+
+        If the wildcard count would be 2, then the wildcard domain would
+        be ``*.fi''. Note that with wildcard name ``*.fi'' you could NOT
+        connect to ``nic.funet.fi'' because that would result in a
+        server name [1mcollision [22m(*.fi matches nic.funet.fi).
+
+        I advise you to not to use wildcard servers before you know for
+        sure how they are used, they are mostly beneficial for backbones
+        of countries and other large areas with common domain.
+
+
+
+  [1m4.9.  Deny auto-connections[0m
+
+
+     [1mIntroduction[0m
+        D lines were implemented to give server administrators more
+        control on how auto connections are done.  This will most likely
+        only be useful for big networks which have complex
+        configurations.
+
+     [1mFormat[0m
+
+        D:<Denied Server Mask>:Denied Class:<Server Name>:Server Class:
+
+
+     [1mDenied Server Mask[0m
+        This field is matched against all servers currently present on
+        the network.
+
+     [1mDenied Class[0m
+        If this field contains a class number, it will match if any
+        server in that class is currently present on the network.  Note
+        that this can be true for any server, even the ones not directly
+        connected.
+
+     [1mServer Mask[0m
+        This field is matched against the server name that the server
+        wants to auto connect to.
+
+     [1mServer Class[0m
+        This field is used to match against the class to which belong
+        the servers for which an autoconnect is set.
+
+     [1mExamples[0m
+        D:*.edu::*.fi::
+
+        Don't auto-connect to any ``*.fi'' server if any server present
+        on the network matches ``*.edu''.
+
+        D::2:eff.org:3:
+
+        Do not auto-connect to ``eff.org'', or any server in class ``3''
+        if a server defined to be in class ``2'' is currently present on
+        the network.
+
+
+  [1m4.10.  Hub connections[0m
+
+
+     [1mIntroduction[0m
+        In direct contrast to L-lines, the server also implements H-
+        lines to determine which servers may act as a hub and what they
+        may ``hub for''.  If a server is only going to supply its own
+        name (ie act as a solitary leaf) then no H-line is required for,
+        else a H-line must be added.
+
+     [1mFormat[0m
+
+        H:<Server Mask>:<SID Mask>:<Server Name>::
+
+
+
+     [1mServer Mask[0m
+        All servers that are allowed via this H-line must match the mask
+        given in this field.
+
+     [1mSID Mask[0m
+        SIDs of all servers that are allowed via this H-line must match
+        the mask given in this field. Empty field is equal to '*', that
+        is any SID is allowed to be introduced.
+
+     [1mServer Name[0m
+        This field is used to match exactly against a server name,
+        wildcards being treated as literal characters.
+
+     [1mExamples[0m
+        H:*.edu::*.bu.edu::
+
+        Allows a server named ``*.bu.edu'' to introduce only servers
+        that match the ``*.edu'' name mask, no matter what SID they
+        have.
+        H:*:616*:eff.org::
+
+        Allows ``eff.org'' to introduce (and act as a hub for) any
+        server which SID begins with ``616''.
+
+     [1mNote[0m
+        It is possible to have and use multiple H-lines (or L-lines) for
+        the one server.  eg:
+
+
+        H:*.edu:*:*.bu.edu::
+        H:*.au:*:*.bu.edu::
+
+
+
+     is allowed as is
+
+
+     L:*.edu:*:*.au::
+     L:*.com:*:*.au::
+
+
+
+  [1m4.11.  Leaf connections[0m
+
+
+     [1mIntroduction[0m
+        To stop servers which should only act as leaves from hubs
+        becoming hubs accidently, the L line was introduced so that hubs
+        can be aware of which servers should and shouldnt be treated as
+        leaves. A leaf server is supposed to remain a node for the
+        entirity of its life whilst connected to the IRC server network.
+        It is quite easy, however for a leaf server to be incorrectly
+        setup and create problems by becoming a node of 2 or more
+        servers, ending its life as a leaf. The L line enables the
+        administrator of an IRC ``Hub server'' to ``stop'' a server
+        which is meant to act as a leaf trying to make itself a hub.
+        If, for example, the leaf server connects to another server
+        which doesnt have an L-line for it, the one which does will drop
+        the connection, once again making the server a leaf.
+
+     [1mFormat[0m
+
+        L:<Server Mask>:*:<Server Name>:<Max Depth>:
+
+
+
+     [1mServer Mask[0m
+        Mask of which servers the leaf-like attributes are used on when
+        the server receives SERVER messages.  The wildcards * and ? may
+        be used within this field for matching purposes.  If this field
+        is empty, it acts the same as if it were a single * (ie matches
+        everything).
+
+     [1mServer Name[0m
+        The name of the server connected to you that for which you want
+        to enforce leaf-like attributes upon.
+
+     [1mMax Depth[0m
+        Maximum depth allowed on that leaf and if not specified, a value
+        of 1 is assumed.  The depth is checked each time a SERVER
+        message is received by the server, the hops to the server being
+        the field checked against this max depth and if greater, the
+        connection to the server that made its leaf too deep has its
+        connection dropped.  For the L-line to come into effect, both
+        fields, 2 and 4, must match up with the new server being
+        introduced and the server which is responsible for introducing
+        this new server.
+
+
+  [1m4.12.  Version limitations[0m
+
+
+     [1mIntroduction[0m
+        V-lines are used to restrict server connecting to you based on
+        their version and on compile time options.
+
+     [1mFormat[0m
+
+        V:<Version Mask>:<Flags>:<Server Mask>::
+
+
+
+     [1mVersion Mask[0m
+        The matching version number strings will be rejected.
+
+     [1mFlags[0m
+        If any flag specified in this field is found in the peer's flags
+        string, it will be rejected.
+
+     [1mServer Mask[0m
+        This field is used to match server names.  The V line will be
+        used for servers matching the mask given in this field.
+
+     [1mServer Type[0m
+        Both the [1mVersion Mask [22mand the [1mFlags [22mshould be prefixed with the
+        server type identification.  This implementation uses the id
+        ``[1mIRC[22m'' (starting with version 2.10).
+
+     [1mExamples[0m
+        V:IRC/021001*::*::
+
+        Disallows any ``IRC'' server which version is 2.10.1* to
+        connect.
+
+        V:IRC/021001*:IRC/D:*::
+
+        Disallows any ``IRC'' server which version is 2.10.1* or which
+        has been compiled with DEBUGMODE defined to connect.
+
+        V:*/0209*::::
+
+        Disallows any server using the 2.9 protocol to connect.
+
+     [1mNote[0m
+        It is possible to have and use multiple V-lines for the one
+        server mask.
+
+        V:IRC/021001*::*::
+
+        V:IRC/021002*::*::
+
+        is allowed.
+
+     [1mProtocol Version[0m
+        Only the 4 first digit of the [1mVersion Number [22mare standard: they
+        define the protocol version.  The remaining of the string is
+        implementation dependant; matches on this part should be used
+        with particular identification.
+
+
+     [1mFlags[0m
+        are not standard.  Therefore, this field [1mshould always [22mcontain a
+        specific identification.
+
+
+  [1m4.13.  Excluded machines[0m
+
+  Disallowing SERVERS in your irc net.
+
+     [1mIntroduction[0m
+        In some cases people run into difficulties in net
+        administration.  For one reason or another you do not want a
+        certain server to be in your net (for example because of the
+        security holes it opens for every server if it's not secured
+        carefully). In that case you should use Q-lines in your server.
+        When you specify a server name in Q-line, everytime some server
+        link tries to introduce you a server (remember, all server names
+        are broadcast around the net), that name is checked if it
+        matches the Q-lines in your server. If it matches, then [1myour[0m
+        [1mserver [22mdisconnects the link. Note that just placing Q-lines to
+        your server probably results in [1myour server [22mbeing left alone,
+        unless other servers have agreed to have the same Q-line in
+        their ircd configuration files as well.
+
+     [1mExample[0m
+        Q::of the security holes:foo.bar.baz::
+
+        This command excludes a server named ``foo.bar.baz'', the reason
+        is given to be security holes (you should give a reason, it is
+        polite). The first field is unused, so leave it empty.
+
+
+  [1m4.14.  Service connections[0m
+
+
+     [1mIntroduction[0m
+        The Service is a special kind of IRC client. It does not have
+        the full abilities of a normal user but can behave in a more
+        active manner than a normal client.
+
+        Services are not intended for interactive usage, and are better
+        suited for automated clients.
+
+     [1mFormat[0m
+
+        S:<TARGET Host Mask>:<Password>:<Service Name>:<Service Type>:<Class>
+
+
+
+     [1mTARGET Host Mask[0m
+        The host mask should be set to match the host(s) from which the
+        service will be connecting from. This may be either an IP# or
+        full name (prefered).
+
+     [1mPassword[0m
+        This is the password which must be passed in the SERVICE
+        command.
+
+     [1mService Name[0m
+        The name used by the service. Services don't have nicknames, but
+        a static name defined by the S line.
+
+     [1mService Type[0m
+        The type of service. It defines the priviledges given to the
+        service. Be very careful in the types you allow.  The types can
+        be found in include/service.h
+     [1mClass[0m
+        The class field should refer to an existing class.
+
+     [1mNotes[0m
+        A service is not a very useful sort of client, it cannot join
+        channels or issue certain commands although most are available
+        to it. Services are rejected upon sending an unknown or
+        unallowed command. Services however, are not affected by flood
+        control and can be granted special privileges. It is therefore
+        [1mwise to oversee the use of S-lines with much care.[0m
+
+
+  [1m4.15.  Bounce server[0m
+
+
+     [1mIntroduction[0m
+        This provides you a way to bounce clients to another server.
+        This information is provided to clients which are denied
+        connection, either because their connection class is full, or
+        the server is full, or they are not authorized to connect.
+
+     [1mFormat[0m
+
+        B:<Class|Host Mask>::<Server Name>:<Port>:
+
+
+
+     [1mB  [22mThis specifies a Bounce record.
+
+     [1mClass|Host Mask[0m
+        This field specifies to which client this configuration line
+        applies to.  It can be either a connection class number, a host
+        mask to be matched against the client's hostname, or an IP
+        address/mask/bitmask to be matched against the client's IP
+        address.
+
+        When the server is completely full, it rejects clients with the
+        ``All connections in use'' message.  In this case, the server
+        doesn't process the connections at all, and has no knowledge of
+        the client's host name, or class number.  For these cases, this
+        field must be empty.
+
+     [1mServer Name[0m
+        This specifies the IRC server hostname that the client should
+        use.
+
+     [1mPort[0m
+        This specifies the IRC server port that the client should
+        connect to.
+
+     [1mExample[0m
+        B:2::irc.stealth.net:6660:
+
+        Rejected clients in class 2 are advised to use
+        ``irc.stealth.net'' on port 6660.
+
+        B:*.fi::irc.funet.fi:6667:
+
+        Finnish client should use irc.funet.fi when they cannot be taken
+        anymore.
+
+        B:::irc2.stealth.net:6667:
+
+        When the server is completely full, clients should use the
+        secondary server.
+
+  [1m5.  Related resources[0m
+
+
+     [1mMailing list[0m
+        A list is dedicated to the people using ircd. If you have
+        trouble running ircd, or wish to discuss the future, you can
+        subscribe by sending an email to majordomo@irc.org, with
+        ``[1msubscribe ircd-users[22m'' in the body.
+
+        If you just have a question and don't want to subscribe to the
+        list, mail to ircd-users@irc.org.  Be sure to indicate which
+        version you are using.
+
+     [1mDevelopment[0m
+        Technical discussions and development are carried on ircd-
+        dev@irc.org.  People interested in very early testing, and/or
+        working on the source code are welcome.  This is done by sending
+        an email to majordomo@irc.org, with ``[1msubscribe ircd-dev[22m'' in
+        the body.
+
+     [1mFAQ[0m
+        It can be found on the WWW, at
+        <http://www.irc.org/tech_docs/ircnet/faq.html>.
+
+     [1mWWW[0m
+        Several pages related to the ircd:
+        <http://www.irc.org/techie.html>.
+
+
+  [1m6.  Reporting a bug[0m
+
+  If you encounter a bug in the software, here is how and where to
+  report it.
+
+
+  [1m6.1.  How to report a bug[0m
+
+  To save everyone time, make sure that your e-mail contains all the
+  information related to your problem.  In particular, we need to know:
+
+     [1mPackage version[0m
+        The IRC software version you are using: please include the
+        output obtained by running ``irc -v'' for the client, and/or
+        ``ircd -v'' for the server.
+
+        Also, let us know if you have applied any patch to the package
+        or if it is the vanilla version.
+
+     [1mOS [22mPlease, indicate which OS version you are running.
+
+     [1mConfiguration[0m
+        If it is related to a configuration problem with the server,
+        include the relevant parts of the configuration file.
+
+     [1mBacktrace[0m
+        If the bug results in a crash, please include the backtrace.
+        (This can be done, for example, by running ``gdb'' on the core
+        file, and typing ``where'').
+
+     [1mFix[0m
+        If you have a fix, don't forget to include it.
+
+
+
+  [1m6.2.  Where to send a bug report[0m
+
+  Reports should be sent to ircd-bugs@irc.org.  Your report will be
+  reviewed and forwarded to the appropriate mailing list.
+
+
+

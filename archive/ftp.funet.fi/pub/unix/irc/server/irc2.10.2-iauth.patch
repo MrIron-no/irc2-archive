@@ -1,0 +1,60 @@
+Date:	Sat, 6 Feb 1999 16:49:10 -0500
+From:	Christophe Kalt <kalt@stealth.net>
+To:	ircd-users@irc.org
+Subject: [2.10.2] iauth FIX
+Content-Type: multipart/mixed; boundary=y0ulUmNC+osPPQO6
+
+--y0ulUmNC+osPPQO6
+Content-Type: text/plain; charset=us-ascii
+
+IMPORTANT: if you set the "paranoid" option for the SOCKS
+module, open proxies WILL NOT be rejected.
+
+The attached diff will fix the problems reported earlier
+about iauth not logging, as well as the bug mentionned
+above.
+
+To restart the iauth process, simply install a new binary
+and kill the old process.  The IRC daemon should restart
+iauth automatically.  In case it doesn't, this can be forced
+by sending a USR1 signal to the ircd process.
+
+Christophe
+
+--y0ulUmNC+osPPQO6
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: attachment; filename=iauth_fix
+
+Index: iauth/mod_socks.c
+===================================================================
+RCS file: /usr/local/repository/irc/iauth/mod_socks.c,v
+retrieving revision 1.11
+diff -u -r1.11 mod_socks.c
+--- mod_socks.c	1999/01/18 21:38:59	1.11
++++ mod_socks.c	1999/02/06 21:43:26
+@@ -201,19 +201,19 @@
+ 	tmpbuf[0] = txtbuf[0] = '\0';
+ 	if (strstr(self->opt, "log"))
+ 	    {
+-		mydata->options = OPT_LOG;
++		mydata->options |= OPT_LOG;
+ 		strcat(tmpbuf, ",log");
+ 		strcat(txtbuf, ", Log");
+ 	    }
+ 	if (strstr(self->opt, "reject"))
+ 	    {
+-		mydata->options = OPT_DENY;
++		mydata->options |= OPT_DENY;
+ 		strcat(tmpbuf, ",reject");
+ 		strcat(txtbuf, ", Reject");
+ 	    }
+ 	if (strstr(self->opt, "paranoid"))
+ 	    {
+-		mydata->options = OPT_PARANOID;
++		mydata->options |= OPT_PARANOID;
+ 		strcat(tmpbuf, ",paranoid");
+ 		strcat(txtbuf, ", Paranoid");
+ 	    }
+
+--y0ulUmNC+osPPQO6--
+

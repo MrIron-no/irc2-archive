@@ -1,0 +1,23 @@
+Index: res.c
+===================================================================
+RCS file: /usr/local/repository/irc/ircd/res.c,v
+retrieving revision 1.21.2.10
+diff -u -r1.21.2.10 res.c
+--- res.c	2000/12/11 21:10:03	1.21.2.10
++++ res.c	2001/09/01 22:16:26
+@@ -1380,6 +1380,7 @@
+ 	*/
+ 	if (!rptr->he.h_name || !WHOSTENTP(rptr->he.h_addr.S_ADDR))
+ 		return NULL;
++#if 0
+ 	/*
+ 	** Make cache entry.  First check to see if the cache already exists
+ 	** and if so, return a pointer to it.
+@@ -1392,6 +1393,7 @@
+ 				(char *)&(rptr->he.h_addr_list[i].S_ADDR))))
+ #endif
+ 			return cp;
++#endif
+ 
+ 	/*
+ 	** a matching entry wasnt found in the cache so go and make one up.

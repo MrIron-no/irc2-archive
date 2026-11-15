@@ -1,0 +1,536 @@
+This patch is meant for irc2.8.21.tar.gz package. Applying it
+shouldn't break anything in current IRC protocol, but it brings
+some more configurable features and patches. By default they are
+configured as follows:
+
+Patches:
+* Using LOCAL_KILL_ONLY generated nick collisions
+* Q:lined server generated bad WALLOPS (ircd) and
+  WALLOPS parameters were partly lost in client.
+* Support for ident in multi-homed ircd hosts.
+* Respect all ident replies from remote hosts. Ident replies
+  with OS-type "OTHER" cannot be used directly, but they are
+  stored with '-' prefix. Users with OTHER type identification
+  can set their own username as they wish. Non-OTHER type ident
+  replies are used for client usernames. (See also FOLLOW_IDENT_RFC)
+
+Options:
+#undef FOLLOW_IDENT_RFC
+Defining this allows all users to set whatever username they wish.
+
+#define HIDE_FAKES
+Stops printing server notices about desynched channels (Fakes)
+
+#define SUN_GSO_BUG
+Recommended when ircd is run on SunOS host which hasn't got
+kernel patch for getsockopt() bug applied. The patch is known
+as Sun patch 100804-03 for SunOS 4.1.x.
+
+#define DELAY_NICKS
+This keeps recently used nicknames 'allocated' by server for
+90 seconds and won't let local users to use the same nick within
+delay. This reduces nick colliding.
+
+#define TRACE_STATS
+Show class summary on TRACE replies to all users who watch
+WALLOPS (MODE nick +w). By default only OPERs see them.
+
+#define NOWRITEALARM
+Remove alarm() calls around socket write() calls. They should
+not be necessary as NON_BLOCKING option is used for sockets.
+
+#define SECUNREG
+Allow only limited command set from unregistered connections.
+
+#undef SHOW_GHOSTS
+Print server NOTICE when message for uninitialized client is received
+and the client is KILLed/SQUITed by local server, or some client
+is being re-registered without QUIT, or badly targetted numerics
+are received. For debugging.
+
+To install this patch file
+1) unpack irc2.8.21.tar.gz,
+2) edit include/config.h to match your purposes
+3) run "patch -p0 < 2821+E1.diff" in the same directory
+where source was unpacked and re-tune your config.h if you wish
+
+Vesa.Ruokonen@lut.fi / 941210
+
+diff -rc1 orig/irc2.8.21/common/bsd.c irc2.8.21/common/bsd.c
+*** orig/irc2.8.21/common/bsd.c	Mon May  2 14:50:11 1994
+--- irc2.8.21/common/bsd.c	Sun Dec  4 01:18:28 1994
+***************
+*** 99,101 ****
+--- 99,103 ----
+  #endif
++ #ifndef NOWRITEALARM
+  	(void)alarm(WRITEWAITDELAY);
++ #endif
+  #ifdef VMS
+***************
+*** 127,129 ****
+  #endif
+! 	(void )alarm(0);
+  #ifdef DEBUGMODE
+--- 129,133 ----
+  #endif
+! #ifndef NOWRITEALARM
+! 	(void)alarm(0);
+! #endif
+  #ifdef DEBUGMODE
+diff -rc1 orig/irc2.8.21/common/parse.c irc2.8.21/common/parse.c
+*** orig/irc2.8.21/common/parse.c	Sat May 28 21:40:56 1994
+--- irc2.8.21/common/parse.c	Sat Dec 10 16:22:28 1994
+***************
+*** 445,446 ****
+--- 445,457 ----
+  	mptr->count++;
++ #if !defined(CLIENT_COMPILE) && defined(SECUNREG)
++         if (!IsRegistered(cptr) &&
++         /* patch to avoid server flooding from unregistered connects: --dl */
++             mptr->func != m_user  && mptr->func != m_quit && 
++             mptr->func != m_admin && mptr->func != m_version && 
++             mptr->func != m_hash  && mptr->func != m_server && 
++             mptr->func != m_pass  && mptr->func != m_nick) {
++ 		sendto_one(cptr, err_str(ERR_NOTREGISTERED), me.name, "*");
++ 		return -1;
++         }
++ #endif
+  	if (IsRegisteredUser(cptr) &&
+***************
+*** 537,539 ****
+  	 */
+! 	if (!index(sender, '.'))
+  		sendto_one(cptr, ":%s KILL %s :%s (%s(?) <- %s)",
+--- 548,554 ----
+  	 */
+! 	if (!index(sender, '.')) {
+! #ifdef SHOW_GHOSTS
+! 		sendto_ops("Ghost %s from %s killed.",
+! 			   sender, get_client_name(cptr, FALSE));
+! #endif
+  		sendto_one(cptr, ":%s KILL %s :%s (%s(?) <- %s)",
+***************
+*** 541,543 ****
+  			   get_client_name(cptr, FALSE));
+! 	else
+  		sendto_one(cptr, ":%s SQUIT %s :(Unknown from %s)",
+--- 556,562 ----
+  			   get_client_name(cptr, FALSE));
+! 	} else {
+! #ifdef SHOW_GHOSTS
+! 		sendto_ops("Unknown %s from %s squited.",
+! 			   sender, get_client_name(cptr, FALSE));
+! #endif
+  		sendto_one(cptr, ":%s SQUIT %s :(Unknown from %s)",
+***************
+*** 544,545 ****
+--- 563,565 ----
+  			   me.name, sender, get_client_name(cptr, FALSE));
++ 	}
+  }
+diff -rc1 orig/irc2.8.21/include/config.h irc2.8.21/include/config.h
+*** orig/irc2.8.21/include/config.h	Wed Jun 15 16:58:12 1994
+--- irc2.8.21/include/config.h	Sat Dec 10 18:19:19 1994
+***************
+*** 360,361 ****
+--- 360,370 ----
+  
++ #undef FOLLOW_IDENT_RFC
++ #define HIDE_FAKES
++ #define SUN_GSO_BUG
++ #define DELAY_NICKS
++ #define TRACE_STATS
++ #define NOWRITEALARM
++ #define SECUNREG
++ #undef SHOW_GHOSTS
++ 
+  /*   STOP STOP STOP STOP STOP STOP STOP STOP STOP STOP STOP STOP STOP STOP  */
+diff -rc1 orig/irc2.8.21/include/patchlevel.h irc2.8.21/include/patchlevel.h
+*** orig/irc2.8.21/include/patchlevel.h	Sat Dec  3 13:16:18 1994
+--- irc2.8.21/include/patchlevel.h	Sun Dec  4 18:34:32 1994
+***************
+*** 19,21 ****
+  #ifndef	PATCHLEVEL
+! #define PATCHLEVEL "2.8.21"
+  #endif
+--- 19,21 ----
+  #ifndef	PATCHLEVEL
+! #define PATCHLEVEL "2.8.21+E1"
+  #endif
+diff -rc1 orig/irc2.8.21/irc/c_msg.c irc2.8.21/irc/c_msg.c
+*** orig/irc2.8.21/irc/c_msg.c	Mon May  2 14:50:18 1994
+--- irc2.8.21/irc/c_msg.c	Sat Dec  3 16:51:05 1994
+***************
+*** 83,85 ****
+  {
+!   sprintf(mybuf, "*** =%s= %s", parv[0], parv[1]);
+    putline(mybuf);
+--- 83,86 ----
+  {
+!   sprintf(mybuf, "*** =%s= %s %s", parv[0], parv[1],
+!                                    BadPtr(parv[2]) ? "" : parv[2]);
+    putline(mybuf);
+diff -rc1 orig/irc2.8.21/ircd/channel.c irc2.8.21/ircd/channel.c
+*** orig/irc2.8.21/ircd/channel.c	Sun Nov  6 12:02:38 1994
+--- irc2.8.21/ircd/channel.c	Sat Dec  3 17:07:44 1994
+***************
+*** 546,547 ****
+--- 546,548 ----
+  		    {
++ #ifndef HIDE_FAKES
+  			sendto_ops("Fake: %s MODE %s %s %s",
+***************
+*** 548,549 ****
+--- 549,551 ----
+  				   parv[0], parv[1], modebuf, parabuf);
++ #endif
+  			ircstp->is_fake++;
+diff -rc1 orig/irc2.8.21/ircd/s_auth.c irc2.8.21/ircd/s_auth.c
+*** orig/irc2.8.21/ircd/s_auth.c	Sun Nov 20 00:51:27 1994
+--- irc2.8.21/ircd/s_auth.c	Fri Dec  9 16:22:37 1994
+***************
+*** 55,57 ****
+  {
+! 	struct	sockaddr_in	sock;
+  
+--- 55,58 ----
+  {
+! 	struct	sockaddr_in	sock, us;
+! 	int	ulen = sizeof(us);
+  
+***************
+*** 89,94 ****
+  
+! 	(void)alarm((unsigned)4);
+! 	if (connect(cptr->authfd, (struct sockaddr *)&sock,
+! 		    sizeof(sock)) == -1 && errno != EINPROGRESS)
+! 	    {
+  		ircstp->is_abad++;
+--- 90,108 ----
+  
+!         /* We must bind the local end to the interface that they connected
+!            to: The local system might have more than one network address,
+!            and RFC931 check only sends port numbers: server takes IP addresses
+!            from query socket -- jrg */
+!         (void)getsockname(cptr->fd, (struct sockaddr *)&us, &ulen);
+!         us.sin_port = htons(0);		/* bind assigns us a port */
+!         us.sin_family = AF_INET;
+!         Debug((DEBUG_NOTICE,"auth(%x) from %s",
+!                cptr, inetntoa((char *)&us.sin_addr)));
+!         if (bind(cptr->authfd, (struct sockaddr *)&us, ulen) >= 0) {
+!             Debug((DEBUG_NOTICE,"auth(%x) to %s",
+!                    cptr, inetntoa((char *)&sock.sin_addr)));
+! 	    (void)alarm((unsigned)4);
+! 	    if (connect(cptr->authfd, (struct sockaddr *)&sock,
+! 		        sizeof(sock)) == -1 && errno != EINPROGRESS) {
+!                 Debug((DEBUG_ERROR,"auth(%x) connect failed to %s - %d",
+!                        cptr, inetntoa((char *)&sock.sin_addr), errno));
+  		ircstp->is_abad++;
+***************
+*** 104,106 ****
+  	    }
+! 	(void)alarm((unsigned)0);
+  	cptr->flags |= (FLAGS_WRAUTH|FLAGS_AUTH);
+--- 118,128 ----
+  	    }
+! 	    (void)alarm((unsigned)0);
+!         } else {
+!             Debug((DEBUG_ERROR,"auth(%x) bind failed on %s port %d - %d",
+!                   cptr, inetntoa((char *)&us.sin_addr),
+!                   ntohs(us.sin_port), errno));
+! 	    sendto_ops("auth(%x) bind failed on %s port %d - %d",
+!                        cptr, inetntoa((char *)&us.sin_addr),
+!                        ntohs(us.sin_port), errno);
+!         }
+  	cptr->flags |= (FLAGS_WRAUTH|FLAGS_AUTH);
+***************
+*** 238,242 ****
+  	ircstp->is_asuc++;
+! 	strncpyzt(cptr->username, ruser, USERLEN+1);
+! 	if (strncmp(system, "OTHER", 5))
+! 		cptr->flags |= FLAGS_GOTID;
+  	Debug((DEBUG_INFO, "got username [%s]", ruser));
+--- 260,268 ----
+  	ircstp->is_asuc++;
+! 	if (!strncmp(system, "OTHER", 5)) {	/* abnormal identifier	*/
+! 		*cptr->username = '-';		/* -> add '-' prefix	*/
+! 		strncpy(&cptr->username[1], ruser, USERLEN);
+! 		cptr->username[USERLEN] = '\0';
+! 	} else
+! 		strncpyzt(cptr->username, ruser, USERLEN+1);
+! 	cptr->flags |= FLAGS_GOTID;
+  	Debug((DEBUG_INFO, "got username [%s]", ruser));
+diff -rc1 orig/irc2.8.21/ircd/s_bsd.c irc2.8.21/ircd/s_bsd.c
+*** orig/irc2.8.21/ircd/s_bsd.c	Sun Nov  6 13:03:35 1994
+--- irc2.8.21/ircd/s_bsd.c	Sat Dec  3 18:12:49 1994
+***************
+*** 1099,1101 ****
+  #endif
+! #if defined(IP_OPTIONS) && defined(IPPROTO_IP)
+  	{
+--- 1099,1101 ----
+  #endif
+! #if defined(IP_OPTIONS) && defined(IPPROTO_IP) && !defined(SUN_GSO_BUG)
+  	{
+diff -rc1 orig/irc2.8.21/ircd/s_debug.c irc2.8.21/ircd/s_debug.c
+*** orig/irc2.8.21/ircd/s_debug.c	Mon Oct 31 13:48:04 1994
+--- irc2.8.21/ircd/s_debug.c	Sat Dec 10 16:23:48 1994
+***************
+*** 51,53 ****
+  #endif
+! #ifdef	NOTE_FORWARDER
+  'f',
+--- 51,53 ----
+  #endif
+! #ifdef	FOLLOW_IDENT_RFC
+  'f',
+***************
+*** 54,55 ****
+--- 54,64 ----
+  #endif
++ #ifdef	HIDE_FAKES
++ 'F',
++ #endif
++ #ifdef	SUN_GSO_BUG
++ 'g',
++ #endif
++ #ifdef	SHOW_GHOSTS
++ 'G',
++ #endif
+  #ifdef	HUB
+***************
+*** 79,80 ****
+--- 88,92 ----
+  #endif
++ #ifdef	DELAY_NICKS
++ 'N',
++ #endif
+  #ifdef	CRYPT_OPER_PASSWORD
+***************
+*** 94,95 ****
+--- 106,110 ----
+  #endif
++ #ifdef	SECUNREG
++ 's',
++ #endif
+  #ifdef	ENABLE_SUMMON
+***************
+*** 100,101 ****
+--- 115,119 ----
+  #endif
++ #ifdef	TRACE_STATS
++ 'T',
++ #endif
+  #ifdef	IRCII_KLUDGE
+***************
+*** 108,109 ****
+--- 126,130 ----
+  'V',
++ #endif
++ #ifdef	NOWRITEALARM
++ 'w',
+  #endif
+diff -rc1 orig/irc2.8.21/ircd/s_numeric.c irc2.8.21/ircd/s_numeric.c
+*** orig/irc2.8.21/ircd/s_numeric.c	Mon May  2 14:50:23 1994
+--- irc2.8.21/ircd/s_numeric.c	Sat Dec 10 17:22:59 1994
+***************
+*** 104,105 ****
+--- 104,110 ----
+  					parv[0], numeric, nick, buffer);
++ #ifdef SHOW_GHOSTS
++ 			else	/* Test to see # of useless numerics */
++ 				sendto_ops("Bad numeric (:%s %d %s%s)",
++ 					   parv[0], numeric, nick, buffer);
++ #endif
+  		    }
+***************
+*** 110,111 ****
+--- 115,121 ----
+  					parv[0], numeric, nick, buffer);
++ #ifdef SHOW_GHOSTS
++ 			else	/* Test to see # of useless numerics */
++ 				sendto_ops("Bad numeric (:%s %d %s%s)",
++ 					   parv[0], numeric, nick, buffer);
++ #endif
+  		    }
+***************
+*** 115,116 ****
+--- 125,131 ----
+  					      numeric, chptr->chname, buffer);
++ #ifdef SHOW_GHOSTS
++ 		else	/* Test to see # of useless numerics */
++ 			sendto_ops("Bad numeric (:%s %d %s%s)",
++ 				   parv[0], numeric, nick, buffer);
++ #endif
+  	    }
+diff -rc1 orig/irc2.8.21/ircd/s_serv.c irc2.8.21/ircd/s_serv.c
+*** orig/irc2.8.21/ircd/s_serv.c	Thu Nov 10 17:38:26 1994
+--- irc2.8.21/ircd/s_serv.c	Wed Dec  7 00:00:03 1994
+***************
+*** 112,114 ****
+  	extern	char	serveropts[];
+! 
+  	if (check_registered(sptr))
+--- 112,114 ----
+  	extern	char	serveropts[];
+! #ifndef SECUNREG	/* Allow VERSION query from unregistered */
+  	if (check_registered(sptr))
+***************
+*** 115,117 ****
+  		return 0;
+! 
+  	if (hunt_server(cptr,sptr,":%s VERSION :%s",1,parc,parv)==HUNTED_ISME)
+--- 115,117 ----
+  		return 0;
+! #endif
+  	if (hunt_server(cptr,sptr,":%s VERSION :%s",1,parc,parv)==HUNTED_ISME)
+***************
+*** 408,411 ****
+  			sendto_ops_butone(NULL, &me,
+! 				":%s WALLOPS * :%s brought in %s, %s %s",
+! 				me.name, me.name, get_client_name(cptr,FALSE),
+  				host, "closing link because",
+--- 408,411 ----
+  			sendto_ops_butone(NULL, &me,
+! 				":%s WALLOPS :%s brought in %s, %s %s",
+! 				me.name, get_client_name(cptr,FALSE),
+  				host, "closing link because",
+***************
+*** 1514,1516 ****
+  	aConfItem *aconf;
+! 
+  	if (check_registered(sptr))
+--- 1514,1516 ----
+  	aConfItem *aconf;
+! #ifndef SECUNREG	/* Allow ADMIN query from unregistered */
+  	if (check_registered(sptr))
+***************
+*** 1517,1519 ****
+  		return 0;
+! 
+  	if (hunt_server(cptr,sptr,":%s ADMIN :%s",1,parc,parv) != HUNTED_ISME)
+--- 1517,1519 ----
+  		return 0;
+! #endif
+  	if (hunt_server(cptr,sptr,":%s ADMIN :%s",1,parc,parv) != HUNTED_ISME)
+***************
+*** 1762,1764 ****
+--- 1762,1768 ----
+           */
++ #ifndef TRACE_STATS
+         	if (!IsAnOper(sptr) || !cnt)
++ #else
++         if (!SendWallops(sptr) || !cnt)
++ #endif
+  	    {
+diff -rc1 orig/irc2.8.21/ircd/s_user.c irc2.8.21/ircd/s_user.c
+*** orig/irc2.8.21/ircd/s_user.c	Sat Sep 17 16:32:14 1994
+--- irc2.8.21/ircd/s_user.c	Sat Dec 10 16:16:06 1994
+***************
+*** 359,362 ****
+  		    }
+! 		else if (sptr->flags & FLAGS_GOTID)
+  			strncpyzt(user->username, sptr->username, USERLEN+1);
+  		else
+--- 359,364 ----
+  		    }
+! #ifndef FOLLOW_IDENT_RFC
+! 		else if (sptr->flags & FLAGS_GOTID && *sptr->username != '-')
+  			strncpyzt(user->username, sptr->username, USERLEN+1);
++ #endif
+  		else
+***************
+*** 553,555 ****
+  	    }
+! 	if (!(acptr = find_client(nick, NULL)))
+  		goto nickkilldone;  /* No collisions, all clear... */
+--- 555,566 ----
+  	    }
+! 	if (!(acptr = find_client(nick, NULL))
+! #ifdef DELAY_NICKS
+!         /*
+!         ** Nick is free, and it comes from another server or
+!         ** it has been free for a while here
+!         */
+!             && (IsServer(cptr) ||
+!                 !find_history(nick, (long)KILLCHASETIMELIMIT))
+! #endif
+!            )
+  		goto nickkilldone;  /* No collisions, all clear... */
+***************
+*** 586,588 ****
+  	*/
+! 	if (IsUnknown(acptr) && MyConnect(acptr))
+  	    {
+--- 597,603 ----
+  	*/
+! 	if (
+! #ifdef DELAY_NICKS
+! 	    acptr &&
+! #endif
+! 	    IsUnknown(acptr) && MyConnect(acptr))
+  	    {
+***************
+*** 1296,1297 ****
+--- 1311,1320 ----
+  	    {
++ #ifdef SHOW_GHOSTS	/* Testing & debugging.. */
++ 		if (!IsUnknown(sptr)) {
++ 		    /* Another server sent us NICK, USER, USER sequence */
++ 		    sendto_ops("Re-registering %s USER %s %s %s %s from %s.",
++ 			       parv[0], parv[1], parv[2], parv[3], parv[4],
++ 			       get_client_name(cptr, FALSE));
++ 		}
++ #endif
+  		strncpyzt(user->server, server, sizeof(user->server));
+***************
+*** 1424,1426 ****
+  #ifdef	LOCAL_KILL_ONLY
+! 	if (MyConnect(sptr) && !MyConnect(acptr))
+  	    {
+--- 1447,1449 ----
+  #ifdef	LOCAL_KILL_ONLY
+! 	if (MyOper(sptr) && !MyConnect(acptr))
+  	    {
+***************
+*** 1585,1587 ****
+  	check_services_butonee(SERVICE_WANT_AWAY, ":%s AWAY :%s",
+! 				parv[0], parv[1]);
+  #endif
+--- 1608,1610 ----
+  	check_services_butonee(SERVICE_WANT_AWAY, ":%s AWAY :%s",
+! 				parv[0], awy2);
+  #endif
+diff -rc1 orig/irc2.8.21/ircd/whowas.c irc2.8.21/ircd/whowas.c
+*** orig/irc2.8.21/ircd/whowas.c	Mon May  2 14:50:25 1994
+--- irc2.8.21/ircd/whowas.c	Sun Dec  4 21:55:01 1994
+***************
+*** 65,66 ****
+--- 65,90 ----
+  /*
++ ** find_history
++ **      Return the user that was using the given nickname within
++ **      the timelimit. Returns NULL, if no one found...
++ */
++ anUser	*find_history(nick, timelimit)
++ char	*nick;
++ time_t	timelimit;
++ {
++ 	Reg1	aName	*wp, *wp2;
++ 
++ 	wp = wp2 = &was[ww_index];
++ 	timelimit = time(NULL)-timelimit;
++ 
++ 	do {
++ 		if (!mycmp(nick, wp->ww_nick) && wp->ww_logout >= timelimit)
++ 			return (wp->ww_user);
++ 		if (wp == was)
++ 			wp = &was[NICKNAMEHISTORYLENGTH];
++ 		wp--;
++ 	} while (wp != wp2);
++ 	return (NULL);
++ }
++ 
++ /*
+  ** get_history

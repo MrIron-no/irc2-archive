@@ -1,0 +1,27 @@
+Index: irc/include/patchlevel.h
+diff -u irc/include/patchlevel.h:1.1.1.1.2.2 irc/include/patchlevel.h:1.1.1.1.2.3
+--- irc/include/patchlevel.h:1.1.1.1.2.2	Thu Apr 24 08:31:43 1997
++++ irc/include/patchlevel.h	Wed Jul  2 09:31:14 1997
+@@ -17,5 +17,5 @@
+  */
+ 
+ #ifndef	PATCHLEVEL
+-#define PATCHLEVEL "0209020002"		/* for server identification */
++#define PATCHLEVEL "0209020003"		/* for server identification */
+ #endif
+Index: irc/ircd/s_serv.c
+diff -u irc/ircd/s_serv.c:1.1.1.1.2.1 irc/ircd/s_serv.c:1.1.1.1.2.3
+--- irc/ircd/s_serv.c:1.1.1.1.2.1	Thu Apr 24 08:32:44 1997
++++ irc/ircd/s_serv.c	Wed Jul  2 11:47:32 1997
+@@ -301,9 +301,9 @@
+ 	else if (parc > 2)
+ 	    {
+ 		(void)strncpy(info, parv[2], REALLEN);
+-		if (parc > 3)
++		i = strlen(info);
++		if (parc > 3 && ((i+2) < REALLEN))
+ 		    {
+-				i = strlen(info);
+ 				(void)strncat(info, " ", REALLEN - i - 1);
+ 				(void)strncat(info, parv[3], REALLEN - i - 2);
+ 		    }

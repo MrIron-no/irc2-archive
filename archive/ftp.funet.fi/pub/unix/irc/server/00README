@@ -1,0 +1,10 @@
+00README		This file
+Old			Some old server packages.
+irc2.10.2-iauth.patch	SOCKS probe fix for irc2.10.2
+irc2.10.2.tgz		IRC server - The release (February 4 1999)
+irc2.10.2p1.tgz		IRC server - The release (March 3 1999)
+irc2.10.3.tgz		IRC server - The release (August 13 1999)
+irc2.9.5.tgz		IRC server - The latest release (Feb 18 1998)
+util			Utility programs for server admin
+
+For more info see http://www.funet.fi/~irc/

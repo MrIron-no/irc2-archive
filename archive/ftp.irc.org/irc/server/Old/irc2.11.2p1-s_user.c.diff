@@ -1,0 +1,28 @@
+Index: s_user.c
+===================================================================
+RCS file: /usr/local/repository/irc/ircd/s_user.c,v
+retrieving revision 1.275
+diff -u -r1.275 s_user.c
+--- s_user.c	11 Jun 2008 18:27:27 -0000	1.275
++++ s_user.c	3 Jul 2008 12:45:19 -0000
+@@ -346,6 +346,10 @@
+ 	if (MyConnect(sptr))
+ 	{
+ 		char *reason = NULL;
++#if defined(USE_IAUTH)
++		static time_t last = 0;
++		static u_int count = 0;
++#endif
+ #ifdef RESTRICT_USERNAMES
+ 		char *lbuf = NULL;
+ #endif
+@@ -404,9 +408,6 @@
+ #endif
+ 
+ #if defined(USE_IAUTH)
+-		static time_t last = 0;
+-		static u_int count = 0;
+-
+ 		if (iauth_options & XOPT_EARLYPARSE && DoingXAuth(cptr))
+ 		{
+ 			cptr->flags |= FLAGS_WXAUTH;

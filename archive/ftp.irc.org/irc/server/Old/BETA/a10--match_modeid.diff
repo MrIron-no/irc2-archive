@@ -1,0 +1,24 @@
+Index: channel.c
+===================================================================
+RCS file: /usr/local/repository/irc/ircd/channel.c,v
+retrieving revision 1.218
+diff -u -r1.218 channel.c
+--- channel.c	2004/06/30 13:04:21	1.218
++++ channel.c	2004/07/03 08:42:03
+@@ -348,7 +348,15 @@
+ 			/* perhaps we could relax it and check remotes too? */
+ 			if (MyConnect(cptr))
+ 			{
+-				if (IsConfNoResolveMatch(cptr->confs->value.aconf))
++				Link *acf = cptr->confs;
++
++				/* scroll acf to I:line */
++				if (IsAnOper(cptr))
++				{
++					acf = acf->next;
++				}
++
++				if (IsConfNoResolveMatch(acf->value.aconf))
+ 				{
+ 					/* user->host contains IP and was just
+ 					 * checked; try sockhost, it may have

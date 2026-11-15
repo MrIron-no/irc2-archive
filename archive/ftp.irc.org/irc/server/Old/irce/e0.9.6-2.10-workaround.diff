@@ -1,0 +1,24 @@
+diff -ru irce-0.9.6.orig/src/s_bsd.c irce-0.9.6/src/s_bsd.c
+--- irce-0.9.6.orig/src/s_bsd.c	Tue Dec  8 13:11:37 1998
++++ irce-0.9.6/src/s_bsd.c	Sun Feb 14 17:54:09 1999
+@@ -954,7 +954,7 @@
+ 		return -1;
+ 	    }
+ 	if (!BadPtr(aconf->passwd))
+-		sendto_one(cptr, "PASS %s 0209", aconf->passwd);
++		sendto_one(cptr, "PASS %s 020900", aconf->passwd);
+ 
+ 	aconf = find_conf(cptr->confs, cptr->name, CONF_NOCONNECT_SERVER);
+ 	if (!aconf)
+diff -ru irce-0.9.6.orig/src/s_serv.c irce-0.9.6/src/s_serv.c
+--- irce-0.9.6.orig/src/s_serv.c	Tue Dec  8 13:11:37 1998
++++ irce-0.9.6/src/s_serv.c	Sun Feb 14 17:54:23 1999
+@@ -631,7 +631,7 @@
+ 	if (IsUnknown(cptr))
+ 	    {
+ 		if (bconf->passwd[0])
+-			sendto_one(cptr,"PASS %s 0209", bconf->passwd);
++			sendto_one(cptr,"PASS %s 020900", bconf->passwd);
+ 		/*
+ 		** Pass my info to the new server
+ 		*/

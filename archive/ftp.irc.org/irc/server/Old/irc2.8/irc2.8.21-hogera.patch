@@ -1,0 +1,232 @@
+diff -cr irc2.8.21/ircd/channel.c irc2.8.21hogera/ircd/channel.c
+*** irc2.8.21/ircd/channel.c	Sun Nov  6 19:02:38 1994
+--- irc2.8.21hogera/ircd/channel.c	Wed Oct 11 13:22:16 1995
+***************
+*** 1326,1332 ****
+  		** notify all other users on the new channel
+  		*/
+  		sendto_channel_butserv(chptr, sptr, ":%s JOIN :%s",
+! 					parv[0], name);
+  		sendto_match_servs(chptr, cptr, ":%s JOIN :%s", parv[0], name);
+  
+  		if (MyClient(sptr))
+--- 1326,1332 ----
+  		** notify all other users on the new channel
+  		*/
+  		sendto_channel_butserv(chptr, sptr, ":%s JOIN :%s",
+! 					parv[0], chptr->chname);
+  		sendto_match_servs(chptr, cptr, ":%s JOIN :%s", parv[0], name);
+  
+  		if (MyClient(sptr))
+***************
+*** 1400,1406 ****
+  #else
+  		sendto_match_servs(chptr, cptr, PartFmt, parv[0], name);
+  #endif
+! 		sendto_channel_butserv(chptr, sptr, PartFmt, parv[0], name);
+  		remove_user_from_channel(sptr, chptr);
+  	    }
+  #ifdef	V28PlusOnly
+--- 1400,1406 ----
+  #else
+  		sendto_match_servs(chptr, cptr, PartFmt, parv[0], name);
+  #endif
+! 		sendto_channel_butserv(chptr, sptr, PartFmt, parv[0], chptr->chname);
+  		remove_user_from_channel(sptr, chptr);
+  	    }
+  #ifdef	V28PlusOnly
+***************
+*** 1494,1500 ****
+  			    {
+  				sendto_channel_butserv(chptr, sptr,
+  						":%s KICK %s %s :%s", parv[0],
+! 						name, who->name, comment);
+  #ifdef	V28PlusOnly
+  				if (*nickbuf)
+  					(void)strcat(nickbuf, ",");
+--- 1494,1500 ----
+  			    {
+  				sendto_channel_butserv(chptr, sptr,
+  						":%s KICK %s %s :%s", parv[0],
+! 						chptr->chname, who->name, comment);
+  #ifdef	V28PlusOnly
+  				if (*nickbuf)
+  					(void)strcat(nickbuf, ",");
+***************
+*** 1754,1760 ****
+  		chptr = find_channel(name, NullChn);
+  		if (chptr && ShowChannel(sptr, chptr) && sptr->user)
+  			sendto_one(sptr, rpl_str(RPL_LIST), me.name, parv[0],
+! 				   ShowChannel(sptr,chptr) ? name : "*",
+  				   chptr->users, chptr->topic);
+  	     }
+  	sendto_one(sptr, rpl_str(RPL_LISTEND), me.name, parv[0]);
+--- 1754,1760 ----
+  		chptr = find_channel(name, NullChn);
+  		if (chptr && ShowChannel(sptr, chptr) && sptr->user)
+  			sendto_one(sptr, rpl_str(RPL_LIST), me.name, parv[0],
+! 				   ShowChannel(sptr,chptr) ? chptr->chname : "*",
+  				   chptr->users, chptr->topic);
+  	     }
+  	sendto_one(sptr, rpl_str(RPL_LISTEND), me.name, parv[0]);
+***************
+*** 1841,1849 ****
+  				(void)strcat(buf, "+");
+  			(void)strncat(buf, c2ptr->name, NICKLEN);
+  			idx += strlen(c2ptr->name) + 1;
+  			flag = 1;
+  			(void)strcat(buf," ");
+! 			if (mlen + idx + NICKLEN > BUFSIZE - 2)
+  			    {
+  				sendto_one(sptr, rpl_str(RPL_NAMREPLY),
+  					   me.name, parv[0], buf);
+--- 1841,1851 ----
+  				(void)strcat(buf, "+");
+  			(void)strncat(buf, c2ptr->name, NICKLEN);
+  			idx += strlen(c2ptr->name) + 1;
++ 			if (lp->flags & CHFL_CHANOP || lp->flags & CHFL_VOICE)
++ 			    idx++;
+  			flag = 1;
+  			(void)strcat(buf," ");
+! 			if (mlen + idx + NICKLEN + 1 > BUFSIZE - 2)
+  			    {
+  				sendto_one(sptr, rpl_str(RPL_NAMREPLY),
+  					   me.name, parv[0], buf);
+diff -cr irc2.8.21/ircd/s_user.c irc2.8.21hogera/ircd/s_user.c
+*** irc2.8.21/ircd/s_user.c	Sat Sep 17 22:32:14 1994
+--- irc2.8.21hogera/ircd/s_user.c	Wed Oct 11 13:22:16 1995
+***************
+*** 797,803 ****
+  			if (can_send(sptr, chptr) == 0)
+  				sendto_channel_butone(cptr, sptr, chptr,
+  						      ":%s %s %s :%s",
+! 						      parv[0], cmd, nick,
+  						      parv[2]);
+  			else if (!notice)
+  				sendto_one(sptr, err_str(ERR_CANNOTSENDTOCHAN),
+--- 797,803 ----
+  			if (can_send(sptr, chptr) == 0)
+  				sendto_channel_butone(cptr, sptr, chptr,
+  						      ":%s %s %s :%s",
+! 						      parv[0], cmd, chptr->chname,
+  						      parv[2]);
+  			else if (!notice)
+  				sendto_one(sptr, err_str(ERR_CANNOTSENDTOCHAN),
+diff -cr irc2.8.21/include/config.h irc2.8.21hogera/include/config.h
+*** irc2.8.21/include/config.h	Wed Jun 15 22:58:12 1994
+--- irc2.8.21hogera/include/config.h	Wed Oct 11 13:34:50 1995
+***************
+*** 98,105 ****
+   * these are only the recommened names and paths. Change as needed.
+   * You must define these to something, even if you don't really want them.
+   */
+! #define	DPATH	"/scratch/avalon/ircd"	/* dir where all ircd stuff is */
+! #define	SPATH	"/scratch/avalon/ircd/bin/ircd"
+  #define	CPATH	"ircd.conf"	/* server configuration file */
+  #define	MPATH	"ircd.motd"	/* server MOTD file */
+  #define	LPATH	"/tmp/ircd.log" /* Where the debug file lives, if DEBUGMODE */
+--- 98,105 ----
+   * these are only the recommened names and paths. Change as needed.
+   * You must define these to something, even if you don't really want them.
+   */
+! #define	DPATH	"/usr/local/lib/ircd"	/* dir where all ircd stuff is */
+! #define	SPATH	"/usr/local/bin/ircd"	/* path to server executeable */
+  #define	CPATH	"ircd.conf"	/* server configuration file */
+  #define	MPATH	"ircd.motd"	/* server MOTD file */
+  #define	LPATH	"/tmp/ircd.log" /* Where the debug file lives, if DEBUGMODE */
+***************
+*** 150,156 ****
+   * mode "i" (i == invisible). Invisibility means people dont showup in
+   * WHO or NAMES unless they are on the same channel as you.
+   */
+! #undef	NO_DEFAULT_INVISIBLE
+  
+  /* OPER_KILL
+   *
+--- 150,156 ----
+   * mode "i" (i == invisible). Invisibility means people dont showup in
+   * WHO or NAMES unless they are on the same channel as you.
+   */
+! #define	NO_DEFAULT_INVISIBLE
+  
+  /* OPER_KILL
+   *
+***************
+*** 252,258 ****
+   * The server will then call m4 each time it reads the ircd.conf file,
+   * reading m4 output as the server's ircd.conf file.
+   */
+! #define	M4_PREPROC
+  
+  /*
+   * If you wish to have the server send 'vital' messages about server
+--- 252,258 ----
+   * The server will then call m4 each time it reads the ircd.conf file,
+   * reading m4 output as the server's ircd.conf file.
+   */
+! #undef	M4_PREPROC
+  
+  /*
+   * If you wish to have the server send 'vital' messages about server
+***************
+*** 314,326 ****
+  /*
+   * Max amount of internal send buffering when socket is stuck (bytes)
+   */
+! #define MAXSENDQLENGTH 100000    /* Recommended value: 100000 for leaves */
+                                   /*                    700000 for backbones */
+  /*
+   *  BUFFERPOOL is the maximum size of the total of all sendq's.
+   *  Recommended value is 2 * MAXSENDQLENGTH, for hubs, 5 *.
+   */
+! #define	BUFFERPOOL     (2 * MAXSENDQLENGTH)
+  
+  /*
+   * use these to setup a Unix domain socket to connect clients/servers to.
+--- 314,326 ----
+  /*
+   * Max amount of internal send buffering when socket is stuck (bytes)
+   */
+! #define MAXSENDQLENGTH 1000000    /* Recommended value: 100000 for leaves */
+                                   /*                    700000 for backbones */
+  /*
+   *  BUFFERPOOL is the maximum size of the total of all sendq's.
+   *  Recommended value is 2 * MAXSENDQLENGTH, for hubs, 5 *.
+   */
+! #define	BUFFERPOOL     (5 * MAXSENDQLENGTH)
+  
+  /*
+   * use these to setup a Unix domain socket to connect clients/servers to.
+***************
+*** 410,416 ****
+   *	 resident and running - it hardly ever gets swapped to disk! You can
+   *	 ignore these recommendations- they only are meant to serve as a guide
+   */
+! #define NICKNAMEHISTORYLENGTH 800
+  
+  /*
+   * Time interval to wait and if no messages have been received, then check for
+--- 410,416 ----
+   *	 resident and running - it hardly ever gets swapped to disk! You can
+   *	 ignore these recommendations- they only are meant to serve as a guide
+   */
+! #define NICKNAMEHISTORYLENGTH 10000
+  
+  /*
+   * Time interval to wait and if no messages have been received, then check for
+diff -cr irc2.8.21/include/patchlevel.h irc2.8.21hogera/include/patchlevel.h
+*** irc2.8.21/include/patchlevel.h	Sat Dec  3 20:16:18 1994
+--- irc2.8.21hogera/include/patchlevel.h	Wed Oct 11 13:25:04 1995
+***************
+*** 17,21 ****
+   */
+  
+  #ifndef	PATCHLEVEL
+! #define PATCHLEVEL "2.8.21"
+  #endif
+--- 17,21 ----
+   */
+  
+  #ifndef	PATCHLEVEL
+! #define PATCHLEVEL "2.8.21/hogera"
+  #endif

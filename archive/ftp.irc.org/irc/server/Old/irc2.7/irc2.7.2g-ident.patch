@@ -1,0 +1,132 @@
+From: avalon@coombs.anu.edu.au (Darren Reed)
+Subject: IDENT patch for 2.7.2g
+To: operlist@eff.org (Operator Mailing List)
+Date: Fri, 19 Feb 93 15:06:31 EST
+
+There have been numerous people having problems with server's hanging due
+to problems with the ident operations.  To fix the problem of the server
+hanging unexpectadly, apply the following bug.
+
+All servers which compile with #define IDENT should apply the patch
+below to ircd/authuser.c.
+
+avalon
+
+
+*** authuser.c.orig	Tue Dec  8 13:07:05 1992
+--- authuser.c	Tue Dec  8 13:13:55 1992
+***************
+*** 203,209
+   FD_SET(s,&wfds);
+   r = select(s + 1,(fd_set *) 0,&wfds,(fd_set *) 0,&tv);
+   /* XXX: how to handle EINTR? */
+!  if (r == -1)
+     CLORETS(0)
+   if (!FD_ISSET(s,&wfds))
+    {
+
+--- 203,209 -----
+   FD_SET(s,&wfds);
+   r = select(s + 1,(fd_set *) 0,&wfds,(fd_set *) 0,&tv);
+   /* XXX: how to handle EINTR? */
+!  if (r <= 0)
+     CLORETS(0)
+   if (!FD_ISSET(s,&wfds))
+    {
+***************
+*** 211,217
+     errno = ETIMEDOUT;
+     return 0;
+    }
+!  return auth_sockuser(s,local,remote);
+  }
+  
+  char *auth_sockuser(s,local,remote)
+
+--- 211,217 -----
+     errno = ETIMEDOUT;
+     return 0;
+    }
+!  return auth_sockuser(s,local,remote,timeout);
+  }
+  
+  char *auth_sockuser(s,local,remote,timeout)
+***************
+*** 214,220
+   return auth_sockuser(s,local,remote);
+  }
+  
+! char *auth_sockuser(s,local,remote)
+  register int s;
+  register unsigned short local;
+  register unsigned short remote;
+
+--- 214,220 -----
+   return auth_sockuser(s,local,remote,timeout);
+  }
+  
+! char *auth_sockuser(s,local,remote,timeout)
+  register int s;
+  register unsigned short local;
+  register unsigned short remote,timeout;
+***************
+*** 217,223
+  char *auth_sockuser(s,local,remote)
+  register int s;
+  register unsigned short local;
+! register unsigned short remote;
+  {
+   register int buflen;
+   register int w;
+
+--- 217,223 -----
+  char *auth_sockuser(s,local,remote,timeout)
+  register int s;
+  register unsigned short local;
+! register unsigned short remote,timeout;
+  {
+   register int buflen;
+   register int w;
+***************
+*** 226,232
+   unsigned short rlocal;
+   unsigned short rremote;
+   register int fl;
+!  fd_set wfds;
+   void *old_sig;
+   
+   old_sig = signal(SIGPIPE, SIG_IGN);
+
+--- 226,233 -----
+   unsigned short rlocal;
+   unsigned short rremote;
+   register int fl;
+!  struct timeval tv;
+!  fd_set wfds,rfds;
+   void *old_sig;
+   
+   old_sig = signal(SIGPIPE, SIG_IGN);
+***************
+*** 261,266
+       buflen -= w;
+      }
+   buf = realbuf;
+   while ((w = read(s,&ch,1)) == 1)
+    {
+     *buf = ch;
+
+--- 262,274 -----
+       buflen -= w;
+      }
+   buf = realbuf;
++  FD_ZERO(&rfds);
++  FD_SET(s,&rfds);
++  tv.tv_sec = timeout;
++  tv.tv_usec = 0;
++  w = select(s + 1,&rfds,(fd_set *) 0,(fd_set *) 0,&tv);
++  if (w <= 0 || !FD_ISSET(s,&wfds))
++    CLORETS(0)
+   while ((w = read(s,&ch,1)) == 1)
+    {
+     *buf = ch;
+

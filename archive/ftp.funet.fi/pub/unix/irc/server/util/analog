@@ -1,0 +1,148 @@
+#!/usr/local/bin/perl -s
+# analog, revision 1.2.1
+# 1.2.1 Jan 3 1992, kmk@cc.tut.fi
+# Fixes some off-by-ones, also fixes cases where parameter is gt # of
+# values encountered. I reserve the right to fix bugs and release new
+# versions without telling anybody unless I receive bug reports. :-)
+# 
+# This script is the first result in an effort to get
+# some statistics out of the userlog held by later versions of
+# ircd 2.6.
+#
+# Usage: analog -log=/path/file -hosts=n -users=m -domains
+# defaults: log=/usr/local/lib/irc/userlog, n=5, m=10, no -domains
+#
+# If there is more that is needed, contact me. This script lives in
+# cc.tut.fi:~ftp/pub/irc-utils. [130.230.23.10]
+#
+# Kai 'Kaizzu' Kein{nen <kmk@cc.tut.fi>
+#
+# Thanks to
+# ele <elendil@utu.fi>
+# Max <vmp@fuug.fi>
+
+$log = $log || "/usr/local/lib/irc/userlog";
+$hosts = 5 unless defined $hosts;
+$users = 10 unless defined $users;
+
+open(LOG, $log) || die "$log: $!";
+
+while (<LOG>) {
+    chop;
+    s/\((.*)\)//g && ($time = $1);
+    $sessions++;
+    if (s/: ([^@]+)@(.+)//g) {
+	$user = $1;
+	$user =~ y/[A-Z]/[a-z]/;
+	$host = $2;
+	$host =~ y/[A-Z]/[a-z]/ if $domains;
+	if ($time =~ /\s*(\d+):(\d+):(\d+)/) {
+	    $secs = $1 * 3600 + $2 * 60 + $3;
+	}
+	if ($domains) {
+	    if ($host =~ /(\d+)*\.(\d+)*\.(\d+)*\.(\d+)*/) {
+		$domains{"$1.$2"} += $secs;
+	    }
+	    else {
+		$dom = "";
+		$tmp = $host;
+		while ($tmp =~ s/\.([^.]*)$//) {
+		    $dom = $dom ? "$1.$dom" : $1;
+		    $domains{$dom} += $secs;
+		}
+	    }
+	}
+	$hosts{$host} += $secs;
+	$users{$user} += $secs;
+	$total += $secs;
+    }
+    else {
+	print "Corrupted line: \"$_\"\n";
+    }
+    $date = $_;
+    $firstdate = $date unless $firstdate;
+}
+
+print "IRC Usage statistics from ${firstdate}to $date\n";
+
+@hosts = sort hbyvalue keys(%hosts);
+@users = sort ubyvalue keys(%users);
+@indiv = sort ibyvalue keys(%indiv);
+printf ("%d sessions, %d seconds total. %d hosts, %d different usernames.",
+	$sessions, $total, 1 + $#hosts, 1 + $#users);
+if ($hosts > 0) {
+    $hosts = $#hosts + 1 if ($hosts >= $#hosts);
+    printf "\n%2d leading hosts\t\t\t seconds\n", $hosts;
+    $sum = 0;
+    foreach $i (0..$hosts-1) {
+	printf "%2d.\t", $i+1;
+	print $hosts[$i];
+	print "\t" x (5 - (length($hosts[$i])+1) / 8);
+	&print($hosts{$hosts[$i]});
+	$sum += $hosts{$hosts[$i]};
+    }
+    printf "\tothers\t\t\t\t";
+    &print($total - $sum);
+}
+if ($users > 0) {
+    $users = $#users + 1 if ($users >= $#users);
+    printf "\n%2d leading users (from any host)\t seconds\n",
+    $users;
+    $sum = 0;
+    foreach $i (0..$users-1) {
+	printf "%2d.\t", $i+1;
+	print "$users[$i]\t\t\t";
+	length($users[$i]) < 8 && print "\t";
+	&print($users{$users[$i]});
+	$sum += $users{$users[$i]};
+    }
+    printf "\tothers\t\t\t\t";
+    &print($total - $sum);
+}
+printf "\ttotal\t\t\t\t";
+&print($total);
+
+if ($domains) {
+    printf "\n%sleading domains\t\t\tseconds \n", 
+    $domains > 1 ? sprintf ("%2d ", $domains) : undef;
+    $i = 0;
+    for (sort domainway keys %domains) {
+	printf "%2d.\t", ++$i;
+	print;
+	print "\t" x (5 - (length($_) / 8));
+	&print($domains{$_});
+	exit if ($domains > 1 && $i >= $domains);
+    }
+}
+
+sub hbyvalue {
+    return $hosts{$b} <=> $hosts{$a};
+}
+
+sub ubyvalue {
+    return $users{$b} <=> $users{$a};
+}
+
+sub ibyvalue {
+    return $indiv{$b} <=> $indiv{$a};
+}
+
+sub print {
+    local($time) = pop(@_);
+    local($secs, $min, $hr, $day, $proc);
+    $proc = $time / $total * 100;
+    $secs = $time % 60;
+    $mins = ($time % 3600) / 60;
+    $hr   = ($time % (24*3600)) / 3600;
+    $day  = $time / (24 * 3600);
+    printf "%8d (%3d+%02d:%02d:%02d)\t%5.1f%%\n", $time,
+    $day, $hr, $mins, $secs, $proc;
+}
+    
+sub domainway {
+    local($ac, $bc, $adots, $bdots) = ($a, $b, 0, 0);
+    $adots ++ while ($ac =~ s/\.//);
+    $bdots ++ while ($bc =~ s/\.//);
+    return ($domains{$b} <=> $domains{$a}) if ($domains > 1);
+    return (($adots <=> $bdots) || ($domains{$b} <=> $domains{$a}));
+}

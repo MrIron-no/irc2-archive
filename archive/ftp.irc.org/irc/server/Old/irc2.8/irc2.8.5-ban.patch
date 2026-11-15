@@ -1,0 +1,57 @@
+From owner-operlist@eff.org Wed Apr 21 19:14 EET 1993
+Received: from lut.fi by cc.lut.fi with SMTP
+	(5.61/IDA-1.2.8+Kim) id AA16675; Wed, 21 Apr 93 19:14:37 +0300
+Received: from eff.org by lut.fi with SMTP
+	(5.65c8/IDA-1.4.4/Kim-2.2) id AA16516; Wed, 21 Apr 1993 19:14:58 +0300
+Received: by eff.org id AA05619
+ (5.65c/IDA-1.4.4/pen-ident for oper-inbox); Wed, 21 Apr 1993 12:05:14 -0400 
+Received: from ARCTURUS.CIRIL.FR by eff.org with SMTP id AA05615
+ (5.65c/IDA-1.4.4/pen-ident for <operlist@eff.org>); Wed, 21 Apr 1993 12:05:12 -0400 
+Received: from mines.u-nancy.fr by arcturus.ciril.fr with SMTP
+	(16.6/16.2) id AA04175; Wed, 21 Apr 93 18:05:13 +0200
+Received: by donjuan.mines.u-nancy.fr (4.1/SMI-4.0)
+	id AA18856; Wed, 21 Apr 93 18:04:15 +0200
+From: galibero@mines.u-nancy.fr (Galibert Olivier)
+Message-Id: <9304211604.AA18856@donjuan.mines.u-nancy.fr>
+Subject: Patch for 2.8.* servers
+To: operlist@eff.org
+Date: Wed, 21 Apr 93 18:04:14 MET DST
+X-Mailer: ELM [version 2.3 PL11]
+X-Charset: FI
+X-Char-Esc: 29
+Status: RO
+
+A bug in the code allows anybody to bypass bans in
+any channel. Here's the patch to correct it. The diff -c
+has been done on a 2.8.5 version.
+
+----------------------------Start of patch---------------------------
+*** channel.c.orig      Wed Apr 21 17:49:42 1993
+--- channel.c   Wed Apr 21 17:49:42 1993
+***************
+*** 944,952 ****
+                                        change_chan_flag(lp, chptr);
+                                break;
+                        case MODE_BAN :
+!                               if (ischop && whatt & MODE_ADD &&
+                                    !add_banid(chptr, cp) ||
+!                                   whatt & MODE_DEL && !del_banid(chptr, cp))
+                                    {
+                                        *mbuf++ = c;
+                                        (void)strcat(pbuf, cp);
+--- 944,952 ----
+                                        change_chan_flag(lp, chptr);
+                                break;
+                        case MODE_BAN :
+!                               if (ischop && ( whatt & MODE_ADD &&
+                                    !add_banid(chptr, cp) ||
+!                                   whatt & MODE_DEL && !del_banid(chptr, cp)))
+                                    {
+                                        *mbuf++ = c;
+                                        (void)strcat(pbuf, cp);
+---------------------End of patch-------------------------------------
+
+Have a nice day !
+
+                              Galibert Olivier
+

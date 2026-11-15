@@ -1,0 +1,33 @@
+This patch fixes an important problem with iauth's rfc931 (ident) module.
+it is *strongly recommended* that the patch be applied if the IRC server is
+configured to use iauth. (default configuration)
+
+All 2.10.x versions are affected up to (and including) 2.10.2p1
+
+To install this patch file
+1) unpack irc2.10.x.tar.gz
+2) "cd irc2.10.x"
+3) run "patch < iauth-ident.diff"
+4) configure and compile the software according to the manual
+5) install the new iauth binary
+6) if the server is already running, kill the running iauth process
+   the IRC server should restart iauth
+
+Christophe Kalt - 990602
+
+---
+
+The following diff is a courtesy of Michal *pht* Svoboda <svobodam@eva.vsp.cz>
+
+diff -ru iauth/mod_rfc931.c iauth/mod_rfc931.c
+--- iauth/mod_rfc931.c	Thu Mar 11 20:53:20 1999
++++ iauth/mod_rfc931.c	Sun May 23 01:18:16 1999
+@@ -262,7 +262,7 @@
+ 						    isspace(*chk))
+ 							break;
+ 					if (*chk)
+-						other = 1;
++					        *chk = 0;
+ 					if (cldata[cl].authuser)
+ 						free(cldata[cl].authuser);
+ 					cldata[cl].authuser = mystrdup(ch);

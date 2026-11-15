@@ -1,0 +1,40 @@
+Note:	This is very simple change, it's easiest done by some editor.
+	Just move the single line 6 lines down.
+
+irc:~irc/2821/irc2.8.21/ircd/ diff -c4 channel.c.oli channel.c
+*** channel.c.oli       Fri Apr 12 19:58:55 1996
+--- channel.c   Fri Apr 12 19:59:19 1996
+***************
+*** 678,692 ****
+                        parv++;
+                        /* check now so we eat the parameter if present */
+                        if (keychange)
+                                break;
+-                       *parv = check_string(*parv);
+                        {
+                                u_char  *s;
+  
+                                for (s = (u_char *)*parv; *s; s++)
+                                        *s &= 0x7f;
+                        }
+                        if (MyClient(sptr) && opcnt >= MAXMODEPARAMS)
+                                break;
+                        if (!fm)
+                                fm = *curr;
+--- 678,692 ----
+                        parv++;
+                        /* check now so we eat the parameter if present */
+                        if (keychange)
+                                break;
+                        {
+                                u_char  *s;
+  
+                                for (s = (u_char *)*parv; *s; s++)
+                                        *s &= 0x7f;
+                        }
++                       *parv = check_string(*parv);
+                        if (MyClient(sptr) && opcnt >= MAXMODEPARAMS)
+                                break;
+                        if (!fm)
+                                fm = *curr;
+

@@ -1,0 +1,482 @@
+diff -rc irc2.8.21/ircd/channel.c irc2.8.21hogera2/ircd/channel.c
+*** irc2.8.21/ircd/channel.c	Sun Nov  6 19:02:38 1994
+--- irc2.8.21hogera2/ircd/channel.c	Mon Oct  9 14:19:26 1995
+***************
+*** 1326,1332 ****
+  		** notify all other users on the new channel
+  		*/
+  		sendto_channel_butserv(chptr, sptr, ":%s JOIN :%s",
+! 					parv[0], name);
+  		sendto_match_servs(chptr, cptr, ":%s JOIN :%s", parv[0], name);
+  
+  		if (MyClient(sptr))
+--- 1326,1332 ----
+  		** notify all other users on the new channel
+  		*/
+  		sendto_channel_butserv(chptr, sptr, ":%s JOIN :%s",
+! 					parv[0], chptr->chname);
+  		sendto_match_servs(chptr, cptr, ":%s JOIN :%s", parv[0], name);
+  
+  		if (MyClient(sptr))
+***************
+*** 1400,1406 ****
+  #else
+  		sendto_match_servs(chptr, cptr, PartFmt, parv[0], name);
+  #endif
+! 		sendto_channel_butserv(chptr, sptr, PartFmt, parv[0], name);
+  		remove_user_from_channel(sptr, chptr);
+  	    }
+  #ifdef	V28PlusOnly
+--- 1400,1406 ----
+  #else
+  		sendto_match_servs(chptr, cptr, PartFmt, parv[0], name);
+  #endif
+! 		sendto_channel_butserv(chptr, sptr, PartFmt, parv[0], chptr->chname);
+  		remove_user_from_channel(sptr, chptr);
+  	    }
+  #ifdef	V28PlusOnly
+***************
+*** 1494,1500 ****
+  			    {
+  				sendto_channel_butserv(chptr, sptr,
+  						":%s KICK %s %s :%s", parv[0],
+! 						name, who->name, comment);
+  #ifdef	V28PlusOnly
+  				if (*nickbuf)
+  					(void)strcat(nickbuf, ",");
+--- 1494,1500 ----
+  			    {
+  				sendto_channel_butserv(chptr, sptr,
+  						":%s KICK %s %s :%s", parv[0],
+! 						chptr->chname, who->name, comment);
+  #ifdef	V28PlusOnly
+  				if (*nickbuf)
+  					(void)strcat(nickbuf, ",");
+***************
+*** 1754,1760 ****
+  		chptr = find_channel(name, NullChn);
+  		if (chptr && ShowChannel(sptr, chptr) && sptr->user)
+  			sendto_one(sptr, rpl_str(RPL_LIST), me.name, parv[0],
+! 				   ShowChannel(sptr,chptr) ? name : "*",
+  				   chptr->users, chptr->topic);
+  	     }
+  	sendto_one(sptr, rpl_str(RPL_LISTEND), me.name, parv[0]);
+--- 1754,1760 ----
+  		chptr = find_channel(name, NullChn);
+  		if (chptr && ShowChannel(sptr, chptr) && sptr->user)
+  			sendto_one(sptr, rpl_str(RPL_LIST), me.name, parv[0],
+! 				   ShowChannel(sptr,chptr) ? chptr->chname : "*",
+  				   chptr->users, chptr->topic);
+  	     }
+  	sendto_one(sptr, rpl_str(RPL_LISTEND), me.name, parv[0]);
+***************
+*** 1841,1849 ****
+  				(void)strcat(buf, "+");
+  			(void)strncat(buf, c2ptr->name, NICKLEN);
+  			idx += strlen(c2ptr->name) + 1;
+  			flag = 1;
+  			(void)strcat(buf," ");
+! 			if (mlen + idx + NICKLEN > BUFSIZE - 2)
+  			    {
+  				sendto_one(sptr, rpl_str(RPL_NAMREPLY),
+  					   me.name, parv[0], buf);
+--- 1841,1851 ----
+  				(void)strcat(buf, "+");
+  			(void)strncat(buf, c2ptr->name, NICKLEN);
+  			idx += strlen(c2ptr->name) + 1;
++ 			if (lp->flags & CHFL_CHANOP || lp->flags & CHFL_VOICE)
++ 			    idx++;
+  			flag = 1;
+  			(void)strcat(buf," ");
+! 			if (mlen + idx + NICKLEN + 1 > BUFSIZE - 2)
+  			    {
+  				sendto_one(sptr, rpl_str(RPL_NAMREPLY),
+  					   me.name, parv[0], buf);
+diff -rc irc2.8.21/ircd/s_bsd.c irc2.8.21hogera2/ircd/s_bsd.c
+*** irc2.8.21/ircd/s_bsd.c	Sun Nov  6 20:03:35 1994
+--- irc2.8.21hogera2/ircd/s_bsd.c	Mon Oct 30 09:42:42 1995
+***************
+*** 603,621 ****
+   * -1 = Access denied
+   * -2 = Bad socket.
+   */
+! int	check_client(cptr)
+  Reg1	aClient	*cptr;
+  {
+  	static	char	sockname[HOSTLEN+1];
+  	Reg2	struct	hostent *hp = NULL;
+  	Reg3	int	i;
+   
+  	ClearAccess(cptr);
+  	Debug((DEBUG_DNS, "ch_cl: check access for %s[%s]",
+  		cptr->name, inetntoa((char *)&cptr->ip)));
+  
+  	if (check_init(cptr, sockname))
+! 		return -2;
+  
+  	if (!IsUnixSocket(cptr))
+  		hp = cptr->hostp;
+--- 603,623 ----
+   * -1 = Access denied
+   * -2 = Bad socket.
+   */
+! char*	check_client(cptr)
+  Reg1	aClient	*cptr;
+  {
+  	static	char	sockname[HOSTLEN+1];
+  	Reg2	struct	hostent *hp = NULL;
+  	Reg3	int	i;
++ 	static	char	errmsg[1024];
+   
++ 	errmsg[0] = 0;
+  	ClearAccess(cptr);
+  	Debug((DEBUG_DNS, "ch_cl: check access for %s[%s]",
+  		cptr->name, inetntoa((char *)&cptr->ip)));
+  
+  	if (check_init(cptr, sockname))
+! 		return "No Authorization";
+  
+  	if (!IsUnixSocket(cptr))
+  		hp = cptr->hostp;
+***************
+*** 631,639 ****
+  				break;
+  		if (!hp->h_addr_list[i])
+  		    {
+! 			sendto_ops("IP# Mismatch: %s != %s[%08x]",
+! 				   inetntoa((char *)&cptr->ip), hp->h_name,
+! 				   *((unsigned long *)hp->h_addr));
+  			hp = NULL;
+  		    }
+  	    }
+--- 633,644 ----
+  				break;
+  		if (!hp->h_addr_list[i])
+  		    {
+! 			char a[16];
+! 			strcpy(a, inetntoa((char *)hp->h_addr));
+! 			sprintf(errmsg, "%sIP# Mismatch: %s != %s[%s]",
+! 				   "No Authorization -- ",
+! 				   inetntoa((char *)&cptr->ip), hp->h_name, a);
+! 			/* sendto_ops(errmsg+20); */
+  			hp = NULL;
+  		    }
+  	    }
+***************
+*** 642,648 ****
+  	    {
+  		Debug((DEBUG_DNS,"ch_cl: access denied: %s[%s]",
+  			cptr->name, sockname));
+! 		return i;
+  	    }
+  
+  	Debug((DEBUG_DNS, "ch_cl: access ok: %s[%s]",
+--- 647,666 ----
+  	    {
+  		Debug((DEBUG_DNS,"ch_cl: access denied: %s[%s]",
+  			cptr->name, sockname));
+! 		if (i == -3) {
+! 		    return "No more connections";
+! 		} else {
+! 		    if (hp) {
+! 			sprintf(errmsg, "No Authorization -- %s", hp->h_name);
+! 			return errmsg;
+! 		    } else {
+! 			if (errmsg[0]) {
+! 			    return errmsg;
+! 			} else {
+! 			    return "No Authorization -- Can't resolve";
+! 			}
+! 		    }
+! 		}
+  	    }
+  
+  	Debug((DEBUG_DNS, "ch_cl: access ok: %s[%s]",
+***************
+*** 654,660 ****
+  		ircstp->is_loc++;
+  		cptr->flags |= FLAGS_LOCAL;
+  	    }
+! 	return 0;
+  }
+  
+  #define	CFLAG	CONF_CONNECT_SERVER
+--- 672,678 ----
+  		ircstp->is_loc++;
+  		cptr->flags |= FLAGS_LOCAL;
+  	    }
+! 	return NULL;
+  }
+  
+  #define	CFLAG	CONF_CONNECT_SERVER
+diff -rc irc2.8.21/ircd/s_user.c irc2.8.21hogera2/ircd/s_user.c
+*** irc2.8.21/ircd/s_user.c	Sat Sep 17 22:32:14 1994
+--- irc2.8.21hogera2/ircd/s_user.c	Mon Oct 30 08:43:12 1995
+***************
+*** 322,328 ****
+          char	*parv[3];
+  	short	oldstatus = sptr->status;
+  	anUser	*user = sptr->user;
+! 	int	i;
+  
+  	user->last = time(NULL);
+  	parv[0] = sptr->name;
+--- 322,328 ----
+          char	*parv[3];
+  	short	oldstatus = sptr->status;
+  	anUser	*user = sptr->user;
+! 	char	*errmsg;
+  
+  	user->last = time(NULL);
+  	parv[0] = sptr->name;
+***************
+*** 330,345 ****
+  
+  	if (MyConnect(sptr))
+  	    {
+! 		if ((i = check_client(sptr)))
+  		    {
+! 			sendto_ops("%s from %s.", i == -3 ?
+! 						  "Too many connections" :
+! 			 			  "Unauthorized connection",
+  				   get_client_host(sptr));
+  			ircstp->is_ref++;
+! 			return exit_client(cptr, sptr, &me, i == -3 ?
+! 					     "No more connections" :
+! 					     "No Authorization");
+  		      } 
+  		if (IsUnixSocket(sptr))
+  			strncpyzt(user->host, me.sockhost, HOSTLEN+1);
+--- 330,341 ----
+  
+  	if (MyConnect(sptr))
+  	    {
+! 		if ((errmsg = check_client(sptr)))
+  		    {
+! 			sendto_ops("%s from %s.", errmsg,
+  				   get_client_host(sptr));
+  			ircstp->is_ref++;
+! 			return exit_client(cptr, sptr, &me, errmsg);
+  		      } 
+  		if (IsUnixSocket(sptr))
+  			strncpyzt(user->host, me.sockhost, HOSTLEN+1);
+***************
+*** 797,803 ****
+  			if (can_send(sptr, chptr) == 0)
+  				sendto_channel_butone(cptr, sptr, chptr,
+  						      ":%s %s %s :%s",
+! 						      parv[0], cmd, nick,
+  						      parv[2]);
+  			else if (!notice)
+  				sendto_one(sptr, err_str(ERR_CANNOTSENDTOCHAN),
+--- 793,799 ----
+  			if (can_send(sptr, chptr) == 0)
+  				sendto_channel_butone(cptr, sptr, chptr,
+  						      ":%s %s %s :%s",
+! 						      parv[0], cmd, chptr->chname,
+  						      parv[2]);
+  			else if (!notice)
+  				sendto_one(sptr, err_str(ERR_CANNOTSENDTOCHAN),
+diff -rc irc2.8.21/include/config.h irc2.8.21hogera2/include/config.h
+*** irc2.8.21/include/config.h	Wed Jun 15 22:58:12 1994
+--- irc2.8.21hogera2/include/config.h	Tue Nov  7 23:38:43 1995
+***************
+*** 98,105 ****
+   * these are only the recommened names and paths. Change as needed.
+   * You must define these to something, even if you don't really want them.
+   */
+! #define	DPATH	"/scratch/avalon/ircd"	/* dir where all ircd stuff is */
+! #define	SPATH	"/scratch/avalon/ircd/bin/ircd"
+  #define	CPATH	"ircd.conf"	/* server configuration file */
+  #define	MPATH	"ircd.motd"	/* server MOTD file */
+  #define	LPATH	"/tmp/ircd.log" /* Where the debug file lives, if DEBUGMODE */
+--- 98,105 ----
+   * these are only the recommened names and paths. Change as needed.
+   * You must define these to something, even if you don't really want them.
+   */
+! #define	DPATH	"/usr/local/lib/ircd"	/* dir where all ircd stuff is */
+! #define	SPATH	"/usr/local/bin/ircd"	/* path to server executeable */
+  #define	CPATH	"ircd.conf"	/* server configuration file */
+  #define	MPATH	"ircd.motd"	/* server MOTD file */
+  #define	LPATH	"/tmp/ircd.log" /* Where the debug file lives, if DEBUGMODE */
+***************
+*** 133,139 ****
+   * won't work, or simply don't want local users to be summoned, undefine
+   * this.
+   */
+! #define	ENABLE_SUMMON	/* local summon */
+  #undef	ENABLE_USERS	/* enables local /users (same as who/finger output) */
+  
+  /* SHOW_INVISIBLE_LUSERS
+--- 133,139 ----
+   * won't work, or simply don't want local users to be summoned, undefine
+   * this.
+   */
+! #undef	ENABLE_SUMMON	/* local summon */
+  #undef	ENABLE_USERS	/* enables local /users (same as who/finger output) */
+  
+  /* SHOW_INVISIBLE_LUSERS
+***************
+*** 150,156 ****
+   * mode "i" (i == invisible). Invisibility means people dont showup in
+   * WHO or NAMES unless they are on the same channel as you.
+   */
+! #undef	NO_DEFAULT_INVISIBLE
+  
+  /* OPER_KILL
+   *
+--- 150,156 ----
+   * mode "i" (i == invisible). Invisibility means people dont showup in
+   * WHO or NAMES unless they are on the same channel as you.
+   */
+! #define	NO_DEFAULT_INVISIBLE
+  
+  /* OPER_KILL
+   *
+***************
+*** 252,258 ****
+   * The server will then call m4 each time it reads the ircd.conf file,
+   * reading m4 output as the server's ircd.conf file.
+   */
+! #define	M4_PREPROC
+  
+  /*
+   * If you wish to have the server send 'vital' messages about server
+--- 252,258 ----
+   * The server will then call m4 each time it reads the ircd.conf file,
+   * reading m4 output as the server's ircd.conf file.
+   */
+! #undef	M4_PREPROC
+  
+  /*
+   * If you wish to have the server send 'vital' messages about server
+***************
+*** 269,277 ****
+   * If you use syslog above, you may want to turn some (none) of the
+   * spurious log messages for KILL/SQUIT off.
+   */
+! #undef	SYSLOG_KILL	/* log all operator kills to syslog */
+! #undef	SYSLOG_SQUIT	/* log all remote squits for all servers to syslog */
+! #undef	SYSLOG_CONNECT	/* log remote connect messages for other all servs */
+  #undef	SYSLOG_USERS	/* send userlog stuff to syslog */
+  #undef	SYSLOG_OPER	/* log all users who successfully become an Op */
+  
+--- 269,277 ----
+   * If you use syslog above, you may want to turn some (none) of the
+   * spurious log messages for KILL/SQUIT off.
+   */
+! #define	SYSLOG_KILL	/* log all operator kills to syslog */
+! #define	SYSLOG_SQUIT	/* log all remote squits for all servers to syslog */
+! #define	SYSLOG_CONNECT	/* log remote connect messages for other all servs */
+  #undef	SYSLOG_USERS	/* send userlog stuff to syslog */
+  #undef	SYSLOG_OPER	/* log all users who successfully become an Op */
+  
+***************
+*** 279,285 ****
+   * If you want to log to a different facility than DAEMON, change
+   * this define.
+   */
+! #define LOG_FACILITY LOG_LOCAL1
+  #endif /* USE_SYSLOG */
+  
+  /*
+--- 279,285 ----
+   * If you want to log to a different facility than DAEMON, change
+   * this define.
+   */
+! #define LOG_FACILITY LOG_LOCAL5
+  #endif /* USE_SYSLOG */
+  
+  /*
+***************
+*** 314,331 ****
+  /*
+   * Max amount of internal send buffering when socket is stuck (bytes)
+   */
+! #define MAXSENDQLENGTH 100000    /* Recommended value: 100000 for leaves */
+                                   /*                    700000 for backbones */
+  /*
+   *  BUFFERPOOL is the maximum size of the total of all sendq's.
+   *  Recommended value is 2 * MAXSENDQLENGTH, for hubs, 5 *.
+   */
+! #define	BUFFERPOOL     (2 * MAXSENDQLENGTH)
+  
+  /*
+   * use these to setup a Unix domain socket to connect clients/servers to.
+   */
+! #define	UNIXPORT
+  
+  /*
+   * IRC_UID
+--- 314,331 ----
+  /*
+   * Max amount of internal send buffering when socket is stuck (bytes)
+   */
+! #define MAXSENDQLENGTH 2000000   /* Recommended value: 100000 for leaves */
+                                   /*                    700000 for backbones */
+  /*
+   *  BUFFERPOOL is the maximum size of the total of all sendq's.
+   *  Recommended value is 2 * MAXSENDQLENGTH, for hubs, 5 *.
+   */
+! #define	BUFFERPOOL     (3 * MAXSENDQLENGTH)
+  
+  /*
+   * use these to setup a Unix domain socket to connect clients/servers to.
+   */
+! #undef	UNIXPORT
+  
+  /*
+   * IRC_UID
+***************
+*** 410,416 ****
+   *	 resident and running - it hardly ever gets swapped to disk! You can
+   *	 ignore these recommendations- they only are meant to serve as a guide
+   */
+! #define NICKNAMEHISTORYLENGTH 800
+  
+  /*
+   * Time interval to wait and if no messages have been received, then check for
+--- 410,416 ----
+   *	 resident and running - it hardly ever gets swapped to disk! You can
+   *	 ignore these recommendations- they only are meant to serve as a guide
+   */
+! #define NICKNAMEHISTORYLENGTH 10000
+  
+  /*
+   * Time interval to wait and if no messages have been received, then check for
+diff -rc irc2.8.21/include/h.h irc2.8.21hogera2/include/h.h
+*** irc2.8.21/include/h.h	Mon May  2 20:50:15 1994
+--- irc2.8.21hogera2/include/h.h	Mon Oct 30 08:43:37 1995
+***************
+*** 81,87 ****
+  extern	aClient	*add_connection PROTO((aClient *, int));
+  extern	int	add_listener PROTO((aConfItem *));
+  extern	void	add_local_domain PROTO((char *, int));
+! extern	int	check_client PROTO((aClient *));
+  extern	int	check_server PROTO((aClient *, struct hostent *, \
+  				    aConfItem *, aConfItem *, int));
+  extern	int	check_server_init PROTO((aClient *));
+--- 81,87 ----
+  extern	aClient	*add_connection PROTO((aClient *, int));
+  extern	int	add_listener PROTO((aConfItem *));
+  extern	void	add_local_domain PROTO((char *, int));
+! extern	char	*check_client PROTO((aClient *));
+  extern	int	check_server PROTO((aClient *, struct hostent *, \
+  				    aConfItem *, aConfItem *, int));
+  extern	int	check_server_init PROTO((aClient *));
+diff -rc irc2.8.21/include/patchlevel.h irc2.8.21hogera2/include/patchlevel.h
+*** irc2.8.21/include/patchlevel.h	Sat Dec  3 20:16:18 1994
+--- irc2.8.21hogera2/include/patchlevel.h	Mon Oct 30 10:06:29 1995
+***************
+*** 17,21 ****
+   */
+  
+  #ifndef	PATCHLEVEL
+! #define PATCHLEVEL "2.8.21"
+  #endif
+--- 17,21 ----
+   */
+  
+  #ifndef	PATCHLEVEL
+! #define PATCHLEVEL "2.8.21/hogera2"
+  #endif

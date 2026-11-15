@@ -1,0 +1,54 @@
+#
+#  This file is an attempt to document the usage of the ircd.conf file,
+#  in a short, concise manner.   For use with irc2.8
+#
+#  Written by Matthew Green, 1993.
+#  Edited by Vesa, 26Jun93.
+
+#  Server name:
+M:host.name::text name:port#
+
+#  Admin info:
+A:three fields with:admin info such as:position and email addressses
+
+#  Conncetion Classes:
+Y:class#:ping freq:connect freq:max links:sendq size
+
+#  Client lines:
+I:ip# or addresss:password:address::class#
+
+#  Client lines with IDENT:
+I:user@ip# or addresss:password:address::class#
+
+#  Operator lines:
+O:domain:password:nick
+
+#  Connect lines:
+C:ip# or address:password:servers irc name:port:class#
+N:ip# or address:password:servers irc name:hostmask bits:class#
+
+#  Connect lines with IDENT:
+C:user@ip# or address:password:servers irc name:port:class#
+N:user@ip# or address:password:servers irc name:hostmask bits:class#
+
+#  Kill lines:
+K:hostname:time of day:username
+
+#  Restrict lines:
+R:hostname:program path:username
+
+#  Quarantine lines:
+Q::message:server.name
+
+#  Leaf lines:
+L:::server.name:depth
+
+#  Selective leaf lines:
+L:mask for not accepted servers::mask for direct link
+
+#  Hub lines:
+H:*.name:*:server.name
+
+#  Port lines:
+P:address:::port
+

@@ -1,0 +1,26 @@
+Index: s_conf.c
+===================================================================
+RCS file: /usr/local/repository/irc/ircd/s_conf.c,v
+retrieving revision 1.192
+retrieving revision 1.194
+diff -u -r1.192 -r1.194
+--- s_conf.c	13 Nov 2009 20:25:55 -0000	1.192
++++ s_conf.c	9 Mar 2010 15:05:01 -0000	1.194
+@@ -48,7 +48,7 @@
+  */
+ 
+ #ifndef lint
+-static const volatile char rcsid[] = "@(#)$Id: s_conf.c,v 1.192 2009/11/13 20:25:55 chopin Exp $";
++static const volatile char rcsid[] = "@(#)$Id: s_conf.c,v 1.194 2010/03/09 15:05:01 chopin Exp $";
+ #endif
+ 
+ #include "os.h"
+@@ -2700,7 +2700,7 @@
+ 		** some crucial parts, which can be seen as a typo. --Beeth */
+ 		err = 1;
+ 	}
+-	if (strchr(host, '/') && match_ipmask(host, sptr, 0) == -1)
++	if (host && strchr(host, '/') && match_ipmask(host+1, sptr, 0) == -1)
+ 	{
+ 		/* check validity of 1.2.3.0/24 or it will be spewing errors
+ 		** for every connecting client. */

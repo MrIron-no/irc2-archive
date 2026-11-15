@@ -1,0 +1,1243 @@
+2.10.0p1
+
+Fri Sep 25 22:21:06 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* channel.c: check for +r mode before calling reop_channel().
+
+2.10.0
+
+Wed Sep 23 19:55:14 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* configure.in, os.h: don't trust poll() to work if it exists.
+	
+	* channel.c:
+		* removed FULLV2_10 ifdef's
+		* don't send empty NJOIN in m_njoin() (Reported by Beeth).
+	
+	* channel.c, s_debug.c, config.h.dist: removed MIRC_KLUDGE.
+
+	* chkconf.c: added warning about old V line format.
+
+	* config.h.dist: OPER_DIE is now defined by default.
+
+	* s_user.c: reverted last change, and hostnames are now truncated.
+
+	* os.h: preprocessor syntax fix.
+
+	* s_conf.c: stupid typo in match_ipmask().
+
+	* s_auth.c: added a new debugging notice.
+
+	* s_debug.c: flags update.
+
+	* ircd.c:
+		* added some debugging info in restart notice.
+		* changed strdup() in mystrdup() (from Andrew Snare).
+
+Sun Sep 20 15:22:25 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* os.h, configure.in: configure now checks for poll() existence to
+	decide if it should be used.
+
+	* res_init.c, s_conf.c: strncpy() bugfixes (from Q).
+
+	* s_auth.c, mod_rfc931.c: '[' is no longer allowed in ident replies.
+
+	* channel.c: don't let chanops set +a on !channels.
+
+	* a_io.c: (weirdbug)fix.
+
+	* s_err.c: numeric 004 update.
+
+	* s_user.c: connections rejected by iauth are now shown as K-lined
+	in &LOCAL.
+
+	* s_bsd.c: new PASS syntax (Q).
+
+Sun Sep 13 20:32:08 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* config.h.dist, ircd.c: removed MYNAME.
+	
+	* Makefile.in, config.h.dist: SPATH/APATH cleanup.
+
+	* parse.c: ABW fix (Leon Brouwers <leonb@sci.kun.nl> and purify).
+
+Sat Sep 12 18:53:39 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* ircd.c, s_bsd.c: SIGCHLD handling code to avoid zombies.
+	
+	* s_bsd.c:
+ 		* udpfd used in place of adfd in in read_message().
+		* silently deal with linux accept() way of life.
+
+	* a_io.c: loop_io() bugfix for select() systems.
+
+	* ircd.c:
+		* me.info from ircd.conf was overridden in setup_me().
+		* server_reboot() created a zombie.
+
+	* s_user.c: allow servers to speak on channels (reported by Q).
+
+	* channel.c:
+ 		* NJOIN bugfix related to unique ops (reported by Q).
+		* removed old core from msa.
+
+	* various little cleanups.
+	
+	* res.c: buffer overflow fix. (thanks to Leon Brouwers
+	<leonb@sci.kun.nl> and purify)
+
+Tue Sep  8 21:23:27 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* s_user.c: user mode +a propagation bugfix.
+
+	* ircd.c: die immediately if no listener exists after reading the conf.
+
+	* send_ext.h, send.c, channel.c: backward compatibility fix for eI
+	channel modes (added sendto_match_servs_v()).
+
+Mon Sep  7 18:03:34 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* s_bsd.c: inversed test for -s in start_iauth().
+
+	* channel.c:
+		* keys starting with ':' don't propagate correctly.
+		* m_njoin() didn't send modes properly to clients.
+
+	* s_serv.c:
+		* slightly changed the PASS syntax again.
+		* 2.10 alphas didn't recognize peers as such (reported by Q).
+
+Sun Aug 23 22:16:40 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* struct_def.h, ircd.c, list.c, list_ext.h, s_conf.c, s_serv.c,
+	s_service.c, s_user.c: aClient's info is now dynamically allocated
+	to overcome server handshake limitations.
+
+Sat Aug 22 15:20:10 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* channel.c: fixed ^G bug (only triggered in channel creation)
+
+	* struct_def.h, channel.c, s_err.c, s_user.c: AWAY is back.
+
+Sun Aug 16 16:01:15 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* ircd.c:, s_bsd.c: added -s switch.
+
+Sat Aug  8 14:21:20 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* s_serv.c: Roger's diff broke compression. (reported by Andre Koopal)
+
+	* Makefile.in: iauth didn't know where to find zlib.h (reported
+	by delta)
+
+	* a_log.c: typos in parameter names (reported by delta).
+
+Fri Aug  7 23:54:10 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* mod_rfc931.c: added sanity check on replies.
+
+Fri Aug  7 00:03:45 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* mod_rfc931.c: read RFC 1413 and fixed the reply parser.
+
+	* numeric_def.h, s_err.c, s_auth_ext.h, s_auth.c, s_serv.c: added
+	/stats a to show iauth's configuation.
+
+	* s_auth.c, a_*.[ch], mod_*.c:
+		* SIGUSR2 will cause iauth to close and reopen log file(s).
+		* worked around delayed messages from the iauth caused by
+		ircd's fd remapping habit.
+		* reduced memory usage by dynamically allocating `inbuffer'.
+		* added G message (a->i).
+		* added E message (i->a) and cleaned up errors messages in
+		parse_ircd().
+		* added a/A messages (a->i) to transmist configuration.
+		* revisited next_io() and hopefully fixed the logic.
+
+	* ircd.c, res.c, s_auth.c, s_auth_ext.h, s_bsd.c, s_user.c:
+		* stdarg'ized sendto_iauth().	
+		* iauth is now automatically restarted.
+		* fixed bcopy() length in read_iauth().
+		* added notices to track the "" username bug.
+
+Tue Aug  4 21:43:53 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* a_io.c: numerous bug fixes..
+
+	* mod_rfc931.c: fix to prevent crash when receiving data from
+	broken ident servers.
+
+	* a_conf.c, a_conf_def.h, a_externs.h, a_log_def.h: added module
+	`socks'.  (Based on a 2.9.5 diff from Jonathan Chapman)
+
+	* a_log.c: added timestamps to `auth' log.
+
+	* s_misc.c: EXITC_AREF is a special case like EXITC_REF.
+
+	* parse.c: penalty bugfix.
+
+	* ircd.c, s_auth.c, s_bsd.c, s_bsd_ext.h:
+ 		* cleaned up iauth startup procedure, added start_iauth()
+		which is called upon SIGUSR1.
+		* various fixes in read_iauth().
+
+Sun Aug  2 18:34:20 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* s_mist_ext.h, s_misc.c, support_ext.h, support.c: moved
+	myctime() from s_misc.c to support.c.
+	
+	* s_bsd.c, a_io.c: added `R' message from ircd to iauth.
+
+	* s_serv.c: updated check_version() not to use NJOIN with 2.9.5 links.
+
+	* parse.c: restricted SQUERY to users.
+	
+	* channel.c: 
+		* m_njoin(): conversion bugfix (Reported by Q).
+		* added FULLV2_10 #if's.
+	
+	* struct_def.h, channel.c, s_err.c, s_misc.c: added channel mode `r'.
+	
+	* send.c: reference to NULL pointer in sendto_match_servs()
+	(Reported by Core).
+
+	* sys_def.c, chkconf.c: MyFree() redefinitions (from Core).
+
+	* Makefile.in: "make install-server" path problems.
+
+Sun Jul 19 15:32:48 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* s_conf.c, ircd.c: unitialized K line comment in check_pings().
+
+	* channel.c:
+		* beI modes to multiple channels were corrupted.
+		* mode parameters starting with : don't propagate correctly.
+		* !channel creation propagation was broken (reported by Eumel).
+
+	* send.c, struct_def.h, channel.s, res.c, ircd.c, s_auth.c,
+	s_auth_ext.h, s_bsd.c, s_bsd_ext.h, s_conf.c, s_user.c,
+	Makefile.in, config.h.dist: added iauth.
+
+Fri Jun 12 19:00:03 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* ircd.c: fix for inetd support (from Jonathan Chapman
+	<jonathan@clover.net>).
+
+	* parse.c, s_debug.c: more LOCOP_* fixes (from Michael Neumayer).
+
+	* s_user.c: oper counter bugfix (from Magnus Tjernstrom).
+
+	* channel.c:
+		* fixed join #a,#b,.. desynch bug (reported by viha@vip.fi).
+		* fixed netjoin +p/+s desynch problem (same).
+	
+Sun May 31 14:18:41 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* send.c, channel.c: '-' leftovers (Michael Neumayer <eumel@42.org>).
+
+Mon May 25 15:13:51 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* struct_def.h, channel.c, hash.c, s_misc.c: changed new channels
+	prefix to ! (instead of -).
+
+	* parse.c: undefining LOCOP_* had no effect (reported by Eumel).
+
+	* s_service.c: SERVICE_WANT_OPER burst fix (from Jonathan Chapman).
+
+	* s_bsd.c: SO_LINGER patch (from Andrew Snare <ajs@pigpond.com>).
+
+	* configure.in: better logic for --resconf.
+
+	* channel.c:
+		* m_invite() fix for &channels.
+		* add_modeid() always used RPL_BANLIST.
+		* bIe modes coming from a server were rejected
+		add_modeid() if another mode with the same pattern existed.
+	
+	* c_debug_ext.h, c_debug.c, chkconf.c, s_misc.c, s_zip.c: fixes
+	for DEBUGMODE (from Andrew Snare <ajs@pigpond.com> & Magnus
+	Tjernstrom <d92-mtm@ludd.luth.se>)
+
+	* hash.c: bigger_prime() useless optimization from Magnus :-)
+
+Tue May  5 19:26:25 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* config.h.dist, Makefile.in, struct_def.h, s_externs.h, send.c,
+	channel.c, hash.c, s_debug.c, s_err.c, s_misc.c, s_serv.c,
+	s_user.c: implemented new channels.
+
+	* struct_def.h, parse.c, channel.c, ircd.c, s_debug.c, s_misc.c,
+	s_serv.c, s_user.c, whowas.c, config.h.dist: replaced BIG_NET #define.
+
+Fri Apr 24 20:30:21 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* irc.c: missing refresh() (from Dave Hill <ddhill@zk3.dec.com>).
+
+	* s_conf.c, s_service.c: portability fixes from Avalon.
+
+	* channel.c, s_user.c: adapted undernet's Bquiet.
+
+Sun Apr  5 17:50:08 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* configure, configure.in, config.h.dist: added --logdir option.
+	
+	* s_serv.c:
+		* moved user wallops from #wallops to +wallops.
+		* stricter m_server() check for unregistered users.
+
+	* send.c: wallops were sent to services and unregistered clients.
+
+Sat Apr  4 19:05:26 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* struct_def.h, packet.c, s_bsd.c: (never triggered) link
+	compression bugfix (Roger Espel Llima <espel@llaic.u-clermont1.fr>).
+
+	* config.h.dist, ircd.c, s_debug.c: added PREFER_SERVER #define.
+
+	* s_user.c:
+		* m_oper() notice bug fix (Michael 'Eumel' Neumayer).
+		* completely disabled AWAY.
+
+	* struct_def.h, parse.c, channel.c, ircd.c, s_debug.c, s_misc.c,
+	s_serv.c, s_user.c, whowas.c, config.h.dist: added BIG_NET #define.
+
+	* s_misc.c; Y2K fix.
+
+Tue Mar 31 18:52:41 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* s_serv.c: removed now obsolete USE_NJOIN.
+
+	* numeric_def.h, struct_def.h, channel.c, s_debug.c, s_err.c,
+	s_serv.c: added channel modes +e (EFnet's exceptions to bans) and
+	+I (invitations); raised MAXBANS (should be renamed) to 30.
+
+	* support.c: extended make_version().
+
+	* channel.c:
+		* notify user when a ban is rejected because "redundant".
+		* /invite (from chanop) now overrides bans & limit.
+
+	* s_debug.c, s_serv.c: /stats r no longer restricted to DEBUGMODE.
+
+	* s_bsd.c: getrlimit()/setrlimit() is now used regardless of
+	poll() availibility.
+
+Sun Mar 22 14:01:24 1998  Christophe Kalt  <kalt@millennium.stealth.net>
+
+	* channel.c: MIRC_KLUDGE sent bogus modes on channel creation.
+
+	* os.h, support.c, s_bsd.c: CYGWIN32 cleanup from Dave Miller.
+
+	* s_user.c: hunt_server() cleanup.
+
+	* s_conf.c: match_ipmask() choked on a.b.c.d/z (reported by Helmut
+	Springer <delta@RUS.Uni-Stuttgart.DE>).
+
+2.9.5
+
+Tue Feb 17 21:25:02 1998  Christophe Kalt
+
+	* s_bsd.c: w32 doesn't have a working fork().
+	
+	* ircd.c: deal with "getpwuid(getuid())" returning NULL.
+	
+	* configure.in, os.h, support.c: use our own truncate() when
+	needed (CYGWIN32), and CYGWIN32 portability.  (Thanks to Dave
+	Miller <yahoo@molalla.net>).
+
+	* config.guess: update.
+
+	* s_user.c: broadcast restriction wasn't right (Yegg).
+
+	* send.c, ircd.c: removed noisy debugging notices.
+
+Sat Feb  7 09:21:52 1998  Christophe Kalt
+
+	* s_user.c:
+		* oper log is now more verbose.
+		* broadcast messages/notices are now less restricted.
+
+	* hash.c: nitpicking (from Magnus Tjernstrom).
+
+	* configure.in: quoting cleanup (from Alain).
+
+	* send_ext.h, s_debug.h: STDARG prototyping cleanup (from Alain).
+
+Fri Jan 23 17:39:17 1998  Christophe Kalt
+
+	* os.h: linux 2.1 implements poll() but the header files are a
+	mess (what did you expect?), kludge to get it work (from Vesa).
+	
+	* channel.c: fixes related to MIRC_KLUDGE.
+
+	* s_conf.c:
+		* find_kill() fix and cleanup (mostly from Vesa).
+		* find_bounce() stricter check and fix (from Vesa).
+	
+	* parse.c: m_njoin() is only used by the server.
+
+Fri Jan 23 17:38:36 1998  Christophe Kalt
+
+	* channel.c:
+		* buffer overflow fix.
+		* bugfix from Avalon.
+		* join/invite were propagated for &channels. (reported by DLR)
+		* invite/kick were propagated beyond masks. (reported by DLR)
+		* multiple kicks could desynch channels.
+	
+	* s_user.c: stricter check on unregistered NICK changes (Avalon).
+
+	* hash.c: hash_find_server() didn't handle z.stealth.net (1
+	letter) masked by *.stealth.net (DLR).
+
+	* msg_def.h, struct_def.h, channel_ext.h, parse.c, channel.c,
+	s_serv.c: added send_channel_members() and m_njoin().
+
+	* send_ext.h, send.c: added sendto_serv_notv().
+
+	* buidm4: yet another m4 booboo. (fix from Mario)
+
+Wed Jan  7 11:40:59 1998  Christophe Kalt
+
+	* s_user.c: strncpy() lameness.
+
+	* s_conf.c: added match_ipmask() (from Vesa).
+
+	* configure.in, send_ext.h: "checking for working stdarg" always
+	failed because of a quoting problem.
+
+Thu Dec 18 21:48:18 1997  Christophe Kalt
+
+	* channel.c: abusive usage of /names now forbidden.
+
+	* class.c: imposed a minimum of 60 seconds for connect frequencies.
+
+	* struct_def.h, s_misc.c, s_serv.c: check_link() tuning and statistics.
+
+Tue Dec 16 17:12:16 1997  Christophe Kalt
+
+	* s_conf.c: finished D lines.
+
+	* numeric_def.h, struct_def.h, list.c, s_err.c, s_serv.c: added
+	check_link() to prevent server links from being flooded by replies
+	to user requests.
+
+	* s_bsd.c: try to prevent the server from flooding with UDP pings.
+
+	* channel.c: #foo:*.tld modes were always sent during the burst.
+
+Wed Nov 12 21:02:15 1997  Christophe Kalt
+
+	* struct_def.h, s_conf_ext.h, s_conf.c, ircd.c, chkconf.c,
+	numeric_def.h, s_err.c , s_serv.c: added D configuration
+	lines. (/stats h)
+
+	* send.c, s_service.c: allocate more dbufs during a service burst
+	if needed.
+
+	* channel.c: cosmetics, and fixed the use of MAXPENALTY in m_kick().
+
+	* s_debug.c: too many parameters in a call to sendto_one().
+
+2.9.4
+
+Sat Oct 18 09:37:33 1997  Christophe Kalt
+
+	* setup.h.in, configure.in: (Alain Nissen)
+		* additional header files checked.
+		* non-blocking system test fixed.
+
+	* os.h: curses/termcap stuff is now only used for the client (AN).
+
+	* swear_ext.h, swear.c: portability issues (Alain Nissen).
+
+	* c_bsd.c, s_bsd.c, os.h: SELECT_FDSET_TYPE (defined in os.h) used
+	as pointer type in select() calls; HPUX compilation problem
+	fixed.  (Alain Nissen)
+
+	* buildm4: typo & missing quote. (again!)	
+
+Fri Oct 10 23:48:25 1997  Christophe Kalt
+
+	* s_serv.c: improved m_die() and m_restart() in case a service is
+	used for user log.
+
+	* os.h, acconfig.h, configure.in, res.c, s_bsd.c: (Alain Nissen)
+		* kludge to deal with broken hostent declaration in
+		netdb.h on some linux systems.
+		* test for sigaction & sigset functions added back; signal
+		implementation test fixed.
+
+	* s_conf.c:
+		* more explicit K line message when reason specified in
+		ircd.conf.
+		* extended I lines syntax.
+
+	* s_service_ext.h, s_service.c, s_misc.c: faster split handling is
+	possible now that 2.8.x protocol is history.
+
+	* channel.c:
+		* m_join() was unefficient on net joins.
+		* MIRC_KLUDGE would never show +ov modes.
+
+	* s_user.c:
+ 		* services can now send to channels (if the modes allow it).
+		* prefixes for restricted connections were gone.
+
+	* buildm4: missing quote.
+
+2.9.4b
+
+Wed Oct  1 21:57:45 1997  Christophe Kalt
+
+	* chkconf.c: added knowledge of B lines.
+
+	* s_debug.c: more info on dbufs for better tuning.
+
+	* channel.c: bans on IP are now matched against resolving clients.
+
+	* s_conf.c: K lines on IP can now be matched against resolving clients.
+
+	* buildm4: update for Y and K line macros, and added macros for
+	B,V,i and k lines (Mario Holbe).
+
+	* s_conf.c: Y global limit per host didn't work.
+
+Wed Sep 24 18:25:45 1997  Christophe Kalt
+
+	* acconfig.h, configure.in, setup.h.in, resolv_def.h, res_init.c:
+	added --resconf=FILE option to configure (Alain Nissen).
+
+	* s_conf.c: fixed bug with Y limits.
+
+Tue Sep 23 11:36:30 1997  Christophe Kalt
+
+	* common_def.h: added CHKCONF_COMPILE statement.
+
+	* bsd_ext.h: incorrect declaration for writeb.
+
+	* support_ext.h, support.c: dumpcore() was broken.
+
+	* class_def.h, class_ext.h, class.c, s_conf.c, s_err.c: it's now
+	possible to combine a limit per host and per user@host for the
+	same class.
+
+	* s_user.c:
+		* RPL_ENDOFWHO wasn't correct.
+		* who_find() / m_whois() didn't always respect +a mode.
+		* @ restriction in username could be bypassed.
+		* unlikely but nonetheless possible ghost generation.
+
+	* ircd.c: setgid() was called after setuid() (reported by Nicole
+	Haywood <kole@mail.usyd.edu.au>)
+
+	* parse.c: avoid a match() call if possible.
+
+Sun Sep 14 19:44:27 1997  Christophe Kalt
+
+	* ircd.c: redundant/useless code commented out.
+
+	* struct_def.h, parse.c, s_err.c, s_serv.c: `stats m' is more verbose.
+
+	* os.h, Makefile.in: zlib.h was missing from includes.
+
+	* s_user.c: 2 fixes (a NULL pointer, and a non reinitialized one).
+
+Thu Sep 11 21:43:20 1997  Christophe Kalt
+
+	* class_def.h, class_ext.h, class.c, s_bsd.c, s_conf.c, s_err.c,
+	s_user.c: added 2 fields to Y lines and implemented [u@]h global
+	limits.
+
+	* service_def.h, channel.c, s_service.c: added SERVICE_WANT_VCHANNEL.
+
+	* channel.c: server channels now have a topic.
+
+	* s_conf.c: negative class numbers are now forbidden.
+
+	* s_conf_ext.h, s_conf.c, s_bsd.c: new B lines format.
+
+Sun Sep  7 20:02:50 1997  Christophe Kalt
+
+	* s_conf.c: B lines now catch "unauthorized connections".
+	
+	* s_user.c: m_who() limit wasn't coded. fixed this and rewrote
+	m_who() because recursivity and penalty don't go together.
+	
+	* s_err.c: REPL_SERVLIST type field is now in hexa.
+
+	* service_def.h, send.c, s_misc.c, s_user.c: extended services
+	capabilities so they can do logging.
+
+	* s_serv.c, s_user.c: added MD5 support for crypt() (from Urvos Juvan).
+
+	* res.c: hostnames containing * or ? are now rejected.
+
+	* s_conf.c: service type field stripped from optional bits (in S
+	lines).
+
+	* s_serv.c: server token wasn't sent to services in m_server_estab().
+
+	* s_service.c: SERVICE_WANT_PREFIX wasn't honored by m_squery().
+
+	* struct_def.h, parse.c, s_serv.c, s_user.c:
+               * added MyService() macro and updated several tests.
+               * next_client() was ignoring services.
+
+Tue Aug 19 08:38:54 1997  Christophe Kalt
+
+	* channel.c: m_names() could still have a truncated reply.
+
+	* more cleaning from Alain.Nissen@ulg.ac.be:
+
+		* struct_def.h, bsd.c, s_bsd.c: removed references to "pyr".
+		* res_comp.c: removed res_getshort() [never used].
+		* removed all references to VMS.
+	
+Mon Aug 11 13:34:15 1997  Christophe Kalt
+
+	* The following changes are from Alain.Nissen@ulg.ac.be
+
+	* all files (in short):
+		* include/ was removed.
+		* all .c have a corresponding _ext.h to declare external
+		variables and functions.
+		* [sc]_externs.h are #includes *_ext.h.
+		* [sc]_defines.h are #includes *_def.h.
+		* all .c have the same list of #include.
+		* os.h has all system #includes and portability tests.
+
+	* Also, several bug and portability fixes:
+	
+		* c_bsd.c: move renamed in tcap_move (portability).
+		* c_msg.c:
+			* added test on DOCURSES before including it.
+			* various casts.
+		* edit.c:
+			* return type of suspend_irc() changed to RETSIGTYPE.
+			* added int argument to suspend_irc().
+			* use of signal(SIGTSTP,...) now depends on
+			whether the signal exists rather than the OS.
+		* help.c: helplist rewritten properly.
+		* irc.c:
+			* strdup() replaced with mystrdup().
+			* do_log() takes 2 arguments.
+			* return type of quit_intr() changed to RETSIGTYPE.
+			* added int argument to quit_intr().
+		* screen.c: such a mess
+			* LINES is only present under curses.
+			* idem for refresh().
+			* clear_to_eol() is supposed to take 2 arguments,
+			but what are they?
+		* swear.c: added to clients targets
+		* channel.c: delch renamed in del_ch.
+		* chkconf.c, parse.c: newline renamed in irc_newline.
+		* ircd.c: s_monitor(), s_die(), s_rehash(), s_restart()
+		return type changed from VOIDSIG to RETSIGTYPE.
+		* res.c: now using SOCK_LEN_TYPE.
+		* res_comp.c, res_init.c: various portability changes.
+		* s_auth.c: now using SOCK_LEN_TYPE.
+		* s_bsd.c: now using SOCK_LEN_TYPE.
+		* s_conf.c: several portability fixes.
+		* s_err.c: local_replies[] and local_replies[] rewritten.
+		* s_service.c: changed test on USE_STDARG.
+		* bsd.c:
+			* return type for dummy() is now RETSIGTYPE.
+			* dummy() now takes one int argument.
+		* dbuf.c: removed unused DBUF_INIT.
+		* support.c:
+			* many changes concerning #if tests.
+			* added solaris_gethostbyname() to use instead of
+			Solaris 2.3 broken gethostbyname().
+			* added irc_memcmp() to use if system's memcmp()
+			is broken.
+		* nameser.h: now using WORDS_BIGENDIAN.
+		* configure.in:
+			* simpler solaris 2.x detection when looking for zlib.
+			* added test for cursesX.
+			* added check for sys_errlist definition in sys/errno.h
+			* and more...
+		* Makefile.in: CFLAGS split in S_CFLAGS, C_CFLAGS and
+		CC_CFLAGS (ircd, irc, chkconf).
+	
+Fri Aug  8 10:51:24 1997  Christophe Kalt
+
+	* channel.c: m_names() behaviour wasn't consistent with m_who()
+	concerning +p channels (Michael 'Eumel' Neumayer).
+
+	* configure.in: minor changes (Alain Nissen).
+
+	* s_user.c: missing argument to err_str() (Kai Seidler).
+
+	* config.h.dist, h.h, struct.h, common.c, channel.c, s_bsd.c,
+	s_debug.c, s_err.c, s_misc.c, s_serv.c, s_service.c, s_user.c:
+	removed support for 2.8 protocol.
+
+	* config.h.dist, msg.h, channel.c, note.c, s_bsd.c, s_debug.c,
+	s_misd.c, s_user.c: removed NOTE.
+
+	* s_bsd.c: wrong argument to bzero().
+
+	* Makefile.in, buildm4: rev.sh replaced by config.guess and
+	buildm4 wasn't ran by `make install-server'.
+
+2.9.3
+
+Wed Jul 23 11:23:30 1997  Christophe Kalt
+
+	* res.c: queries were never resent when reaching timeout (C. Behrens).
+
+	* acconfig.h, configure.in: better sys_errlist test (A. Nissen).
+
+	* version.c.SH.in: portability (A. Nissen).
+
+	* acconfig.h, configure.in, common.h, config.h.dist: AIX cleanup
+	and optimization flags (A. Nissen).
+
+	* configure.in: typo.
+
+Thu Jul 17 23:04:48 1997  Christophe Kalt
+
+	* c_numeric.c, irc.c: fixes from Vesa.
+
+	* send.c: buffer overflow fix.
+
+	* h.h, res_init.c: portability fixes.
+
+Wed Jul 16 21:35:50 1997  Christophe Kalt
+
+	* s_serv.c: m_die() referenced data after freeing it.
+
+	* support.c, res.c: silly changes to make purify happier.
+
+	* s_bsd.c: fixed memory corruption problem.
+
+	* s_user.c: m_whois() voice flag changed back to + (from !).
+
+	* h.h, support.c, configure.in: reverted back: use inet_* if
+	present, use our own inet* if not.  Our functions must be
+	different to avoid some crazy clash when bind 8.x is on installed
+	the system.  Should we teach configure.in about -lbind?
+
+Tue Jul 15 00:18:01 1997  Christophe Kalt
+
+	* inet_addr.c moved to support.c, renamed functions (inet_addr,
+	inet_aton, inet_ntoa, inet_netof) to avoid clashes; always used
+	even if the system has it.
+
+	* New configure and Makefile from Alain Nissen. (many many files
+	changed, removed, created, rewritten)
+
+	* buildm4: update (Mario Holbe).
+
+	* struct.h, s_bsd.c: fixed the P line rehash bug(?).
+
+	* h.h, ircd.c: let's be nice to SunOS' cc.
+
+Mon Jun 30 21:41:11 1997  Christophe Kalt
+
+	* dbuf.c, send.c: earlier changes broke the client.
+
+	* config.h.dist, struct.h, dbuf.h, dbuf.c: new magic formula to
+	compute BUFFERPOOL.  Added MAXSERVERS for this purpose.
+
+	* s_serv.c: buffer overflow (Chris Behrens).
+
+Thu Jun 26 19:18:24 1997  Christophe Kalt
+
+	* struct.h, channel.c, hash.c, parse.c, send.c, s_misc.c,
+	s_service.c:
+		* cleanup.
+		* added &SERVICES.
+
+	* s_bsd.c: wrong buffer size given to getsockopt().
+
+Thu Jun 19 18:35:37 1997  Christophe Kalt
+
+	* h.h, struct.h, s_debug.c, send.c, dbuf.c:
+		* dbuf stats.
+		* send_message() #ifndef SENDQ_ALWAYS was not uptodate,
+		tried to bring it back up to date.
+
+	* res.c: fixed possible buffer overflow.
+	
+	* h.h, s_debug.c, send.c: fixes for STDARG (Olivier Galibert)
+
+	* ircd.c: server_reboot() would crash when called because of "out
+	of memory".
+
+Mon Jun  9 20:49:55 1997  Christophe Kalt
+
+	* config.h.dist, h.h, struct.h, send.c, ircd.c, list.c, s_debug.c,
+	s_serv.c, s_user.c: removed #define KRYS, it is now always `defined'.
+	
+	* config.h.dist, h.h, common.h, service.h, sys.h, configure.in,
+	send.c, support.c, s_auth.c, s_service.c, s_debug.c, s_conf.c:
+	removed references to varargs, added support for stdargs.
+	It is controlled by #define USE_STDARG set by configure. (adapted
+	from Olivier Galibert)
+
+	* ircd.c: CHROOT is really called CHROOTDIR.
+
+	* s_user.c:
+		* extended m_message() to accept n!u@h as recipient.
+		* removed notice for bogus PONG.
+
+	* s_serv.c: /SQUIT now requires 2 arguments from opers.
+
+Sun Jun  1 16:57:39 1997  Christophe Kalt
+
+	* dbuf.h, dbuf.c: #define DBUF_TAIL is back.
+	
+	* s_conf.c: fixed B lines behaviour, port number is now mandatory.
+
+	* send.c: missing arg to dead_link(). (Olivier Galibert)
+
+	* s_serv.c, numeric.h, s_err.c: added /stats B to see B lines (and
+	fixed /stats V reply).
+
+	* service.h, channel.c, s_misc.c, s_service.c, s_serv.c, s_user.c:
+		* numerous bugfixes related to local services (if
+		USE_SERVICES is defined).
+		* extended services option to allow 2.9 NICK syntax, and
+		let them see tokens if they want. (adapted from O.Galibert) 
+
+Wed May 21 21:17:51 1997  Christophe Kalt
+
+	* channel.c, s_service.c, service.h: finished service code (whee).
+		
+	* s_serv.c: services were incorrectly sent during burst.
+
+	* s_bsd.c: ident MUST be done before anything else is read from a
+	client.
+
+Thu May 15 16:27:13 1997  Christophe Kalt
+
+	* struct.h, s_conf.h, s_serv.c: created k: lines to be able to
+	deny access based on OTHER ident replies.
+
+	* s_user.c: changed 001 reply to return n!u@h (more zen).
+
+	* s_serv.c:
+		* if A: is bogus, trash it and complain instead of crashing.
+		* get_client_name() is non-reentrant. *sigh*
+	
+Wed May  7 22:11:04 1997  Christophe Kalt
+
+	* s_user.c: nick chasing kill bug fix. (Chris Behrens)
+
+	* h.h, ircd.c, s_conf.c, s_user.c: K-lined users now exit
+	displaying the Kline comment, if any.
+
+	* s_conf.c: fixed notice ERR_YOUWILLBEBANNED, and don't disconnect
+	then.
+
+	* inet.h, nameser.h, resolv.h, inet_addr.c, portability.h, res.c,
+	res_comp.c, res_init.c, res_mkquery.c: updated. (BIND 4.9.5-P1)
+
+	* channel.c: notice for service could use free'ed memory.
+
+Sun Apr 27 16:40:08 1997  Christophe Kalt
+
+	* send.c: fixed couple buglets (added by Chris Behrens :^).
+
+	* s_user.c: removed dummy m_note() which was unused and buggy, and
+	would let any oper _broadcast_ NOTE queries to the net.
+
+	* m_note.c: Modified m_note() in note.c not to send any NOTE
+	commands to other servers.
+
+	This is lame, someone help me and port note to be a service. 
+	Then, I'll finally take it out of the server !! :-)
+
+Thu Apr 24 18:51:25 1997  Christophe Kalt
+
+	* send.c: better (faster) sendto_common_channel() (from Chris Behrens).
+
+	* s_serv.c: fixed connected burst for services with hostmasks.
+
+	* s_user.c: fixed origin check in m_pong().
+
+	* res.c: added a check on hostnames. (From Darren Reed)
+
+Sun Apr 20 20:30:21 1997  Christophe Kalt
+
+	* s_conf.c: find_bounce() had an inversed test. (how could it work
+	when I tested it??)
+
+	* s_serv.c: SERVER message would occasionnally (and incorrectly)
+	be dropped.
+
+	* s_misc.c: simple optimization in exit_client().
+
+	* s_service.c, s_serv.c: things looked wrong, SERVICE syntax
+	inchorent. Minor memory leak.
+
+	* s_bsd.c, s_misc.c: various "typos" fixed. (UDP & non POLL)
+
+	* send.c, h.h: removed sendto_all_butone(). (unused)
+
+Tue Apr 15 19:41:32 1997  Christophe Kalt
+
+	* sock.h: added a check to make sure FD_SETSIZE is big enough.
+
+	* s_bsd.c, struct.h, s_misc.c: added more UDP stats.
+
+	* s_bsd.c: fixed udp_pfd/res_pfd mess, and cleaned the code. (whee)
+
+	* h.h, struct.h, numeric.h, s_err.c, s_conf.c, s_bsd.c: added B lines.
+
+	* channel.c: defining USE_SERVICE would cause buffer corruption
+	when propagating channel modes to servers. (Found by Michael Neumayer)
+
+Wed Apr  2 15:25:54 1997  Christophe Kalt
+
+	* list.c, s_serv.c: added some error notices for users without server.
+
+	* s_bsd.c: fixed UDP port binding when no IP is given.
+
+	* configure.in: add -cckr to CFLAGS on SGI when using cc(1)
+
+Thu Mar 27 19:03:09 1997  Christophe Kalt
+
+	* h.h, send.c, s_bsd.c, s_user.c, s_serv.c: amount of transferred
+	data added to file logs.
+
+	* config.h.dist: define SVR4 if __svr4__ is there.
+
+	* packet.c: drop server sending an unknown command.
+
+	* s_user.c: changed m_who() for better performance (from Chris
+	Behrens), also put a limit on its number of arguments.
+
+	* h.h, struct.h, list.c: better IsMember (from Chris Behrens).
+
+	* s_serv.c: don't let a user introduce a new server.
+
+Fri Mar 21 19:53:36 1997  Christophe Kalt
+
+	* h.h, struct.h, ircd.c, s_conf.c, s_misc.c, s_serv.c,
+	config.h.dist: server can now cache the MOTD in memory (from Chris
+	Behrens).  See CACHED_MOTD #define.
+
+	* service.h, channel.c, s_serv.c, s_service.c, s_user.c: additions
+	for services.
+
+	* s_misc.c: added missing parameter for check_service_butone().
+
+	* INSTALL completed and converted to sgml
+
+	* s_serv.c: MyRealloc(NULL, size) isn't portable.
+
+Tue Mar 18 17:59:26 1997  Christophe Kalt
+
+	* 2.9.3b10
+	
+	* channel.c, hash.c, res.c, s_serv.c, s_service.c, s_user.c,
+	whowas.c: penalties tuned again. (added Volker Paulsen's anti SPAM
+	hack).
+	
+	* s_err.c, s_serv.c: minor changes to RPL_STATS*
+
+	* s_bsd.c: authclnts[] was not always initialized.
+	
+	* ircd.c: buffer in ircd_readtune() lacked initialization.
+	
+	* s_service.c: fixed buffer overflow.
+
+	* send.c, support.c: # of arguments cleanup.
+	
+	* list.c, res.c, s_service.c: casts to suppress warnings.
+
+	* h.h, dbuf.c: bufalloc, dbufblocks, poolsize now
+	unsigned. (some checks might be needed, poolsize can really get
+	big).
+
+	* s_misc.c: removed duplicate code in exit_client().
+
+	* parse.c:
+ 	
+		* Added more notices when generating SQUITs for unknown
+		servers.
+		* removed bogus else.
+
+Fri Feb 28 09:34:36 1997  Christophe Kalt
+
+	* s_err.c, s_serv.c: Added 2 more fields to RPL_TRACELINK.
+
+Thu Feb 27 14:50:37 1997  Christophe Kalt
+
+	* s_serv.c: /connect by servername didn't work for c lines (from Eumel)
+
+Wed Feb 26 16:48:36 1997  Christophe Kalt
+
+	* s_bsd.c: removed (old) redundant code concerning VIF.
+
+	* config.h.dist: CLONE_MAX and CLONE_PERIOD could be undefined.
+
+	* common.c: match() cleanup.
+
+Thu Feb 13 17:27:53 1997  Christophe Kalt
+
+	* res.c, res_init.c, res_mkquery.c, ircd.c, s_bsd.c: renamed
+	res_init() to ircd_res_init() to avoid conflict (ULTRIX).
+
+	* hash.c, struct.c: cleanup of hashing functions.
+
+	* match.c, parse.c, send.c, common.h, channel.c, hash.c, s_bsd.c,
+	s_misc.c, s_serv.c, s_service.c, s_user.c, note.c, ignore.c:
+
+		*  _match() changed to match() and the check for maximum
+		"recursion" slightly changed.
+		*  match() and matches() removed (stubs from when match
+		was recursive?).
+		* All occurrences of matches() changed to match().
+		* this saves one function call per match.
+
+	* send.c: Added 2 parameters to sendto_serv_butone().
+
+	* s_err.c, s_serv.c: Added one field to RPL_TRACELINK.
+
+Sun Jan 26 20:02:34 EET 1997  Vesa Ruokonen  (ruokonen@aapo.it.lut.fi)
+
+	* 2.9.3b8
+
+	* support.c, h.h, list.c: gcc -Wall cleanups.
+	* h.h, struct.h, chkconf.c, s_conf.c, s_serv.c:
+		created V:lines for checking connecting client parameters.
+		passed as PASS command parameters. A matching V:line.
+		refuses the connection (version number & compile flags).
+	* struct.h, channel.c, s_debug.c:
+		penalty threshold used for limiting KICK params.
+	* struct.h: initial QUEUELEN calculation tuned. (->BUFFERPOOL).
+	* c_msg.c: more verbose m_pong().
+	* channel.c, s_serv.c, s_user.c, whowas.c:
+		penalties tuned for commands generating global bcast.
+	* hash.c: converted multiplication to hashtable lookup to speed.
+		up function calls. (from Core)
+	* ircd.c, s_bsd.c: added truncation for non-appended writes. (_root_)
+	* s_user.c: prefix for voice capability in channel list of WHOIS reply
+		changed from '+' to '!'.
+	* s_user.c: drop PONGs with bad origin.
+		store connection parameters from PASS temporarily to info
+		field in contstant locations.
+	* s_user.c: m_umode() fixed (from Core).
+
+Wed Jan 15 14:42:43 1997  Christophe Kalt
+
+	* s_bsd.c:
+
+		* mysk was initialized by empty password in M line.
+
+Tue Jan 14 24:62:34 EET 1997  Vesa Ruokonen  (ruokonen@aapo.it.lut.fi)
+
+	* parse.c, channel.c, s_user.c: cleanup of find_functions(),
+		_nickserv replaced by _service.
+	* h.h, : setup_ping() takes aConfItem pointer as parameter now.
+	* sys.h: #elif expanded to #else #if for compability
+	* s_bsd.c: inetport(P:line) changed to support VIFs better.
+		More info about listening ports into /stats l.
+		UDP ping is initialized from M:line, not anymore from P:line.
+	* s_numeric.c: cleanups in numeric processing.
+	* Makefile.in, Makefile.irc, Makefile.ircd: makedepend fix
+	* configure.in: zlib check moved to end, as it can interfere
+		other checks when libs aren't in default paths.
+
+Mon Jan 13 09:11:04 1997  Christophe Kalt
+
+	* ircd.c:
+
+		* made the display of version (flag -v) more verbose.
+
+	* regenerated configure (with autoconf 2.12; thanks digital).
+
+	* s_user.c:
+
+		* fixed, and extended KILL reasons for `standard'
+		collisions. (both victims u@h are now shown).
+
+	* send.c:
+
+		* fixed the logic when sending mass message/notice to a
+		server mask.
+
+	* configure.in, Makefile.in:
+
+		* fixed detection & use of zlib using the environment
+		variable ZLIB_HOME (from Vesa).
+
+Thu Jan  9 13:09:36 1997  Christophe Kalt
+
+	* struct.h, ircd.c:
+
+		* added -b command line switch to let the server start
+		even if the ircd.tune file is corrupted (mostly from
+		Magnus Tjernstrom).		
+
+	* s_conf.c:
+
+		* udp listen was setup even if port was defined to be 0.
+
+Wed Jan  8 12:35:03 1997  Christophe Kalt
+
+	* h.h, s_bsd.c, s_conf.c:
+
+		* port field in M configuration line is used again, now to
+		define on which port the server will listen for UDP pings.
+
+	* hash.c:
+
+		* restricted commands to opers (from Vesa).
+
+	* send.c:
+
+		* sendto_match_butone() had a broken behaviour, 
+		brought back the old (2.8.21) behaviour.	
+	
+	* s_bsd.c:
+
+		* fixed negociation of compression for outgoing
+		connections.
+
+		* moved the "rejected connection" notice to &LOCAL.
+
+		* SLOW_ACCEPT #ifdef's changed to #ifndef's to get what
+		one should expect from the define name !
+
+		* made inetport() more readable, and added check on empty
+		string parameter (from Vesa).
+
+		* highfd isn't defined when _DO_POLL_ is defined, so don't
+		use it in debug notices (from Vesa).
+
+		* break changed to continue because ??? (from Vesa).
+
+	* s_user.c:
+
+		* fixed KILL notice sent on nick collision (was using
+		ident reply for remote clients).
+
+		* allowed oper!user@host.foo to send global message/notice
+		to #*.foo
+
+	* s_serv.c, s_user.c, s_bsd.c, s_debug.c:
+	
+		* changed the PASS command semantic (from Vesa).
+
+Fri Jan  3 14:47:52 1997  Christophe Kalt
+
+	* s_bsd.c:
+
+		* completed virtual hosts support (M line).
+
+	* config.h.dist:
+
+		* AIX has poll(), use it.
+
+Mon Dec 30 15:08:20 1996  Christophe Kalt
+
+	* s_bsd.c, h.h:
+
+		* added support for virtual hosts (P line).
+
+Wed Dec 18 12:08:29 1996  Christophe Kalt
+
+	* bsd.c:
+
+		* fixed read_message() bugs resulting from the merge.
+
+	* channel.c:
+
+		* limited the number of possible kicks to MAXMODEPARAMS.
+
+Mon Dec 16 09:36:54 1996  Christophe Kalt
+	
+	* list.c:
+
+		* don't free serv->user too early.
+
+		* removed duplicated(?) away memory count.
+	
+Fri Dec 13 10:28:43 1996  Christophe Kalt - Hmm, Friday the 13th!
+
+	* config.h.dist, s_auth.c, s_user.c, s_debug.c:
+
+		* minor tuning.
+
+Thu Dec 12 10:34:47 1996  Christophe Kalt
+
+	* struct.h, s_auth.c, s_debug.c:
+
+		* added memory usage stats for ident replies.
+
+	* send.c, s_auth.c, s_misc.c:
+
+		* fixed boundaries problems with long ident replies.
+
+Wed Dec 11 17:42:29 1996  Christophe Kalt
+
+	* struct.h, send.c, s_auth.c, s_bsd.c, list.c, s_conf.c, s_misc.c,
+	s_user.c:
+
+		* added auth field to struct Client to eventually store
+		long `OTHER' ident replies.  It is only used in logs, and
+		notices (not in matches against configuration lines).
+	
+	* config.h.dist:
+
+		* added #define SLOW_ACCEPT (default).
+
+		* added #define CLONE_CHECK (default).
+	
+	* s_bsd.c:
+
+		* fixed config line reference counter.
+	
+		* added CLONE_CHECK code (check_clones() from
+		pgoncalves@mail.telepac.pt (Pedro Goncalves)).
+		
+		* added SLOW_ACCEPT (previous behaviour) code.
+
+		* merged the 2 versions of read_message(), fixing some
+		(buggy) difference between them.
+
+		* merged two for() in read_message().
+
+
+Mon Dec  2 11:02:54 1996  Christophe Kalt
+
+	* s_user.c:
+
+		* changed error notice
+	
+	* send.c:
+
+		* #*.mask messages now propagated to other servers.
+	
+	* s_service.c:
+
+		* added missing else.
+
+	* config.h.dist, s_debug.c, channel.c:
+
+		* removed all references to V28PlusOnly
+		* made NoV28Link defined by default
+
+Wed Nov 27 18:09:42 1996  Christophe Kalt
+
+	* struct.h, class.c, ircd.c, s_bsd.c, s_conf.c, s_serv.c:
+
+		* added lowercase c config line
+
+Tue Oct  1 22:29:31 1996  Christophe Kalt
+
+	* added config.h to dependancies in Makefile.ircd
+
+	* config.h.dist, h.h, struct.h, packet.c, send.c, ircd.c, s_bsd.c,
+	s_debug.c, s_serv.c, s_user.c, s_err.c, list.c,	Makefile.ircd,
+	configure.in:
+
+		* added #define ZIP_LINKS and s_zip.c.
+		* made configure look for the zlib (-lgz).
+		* implemented server-server zlib compression.

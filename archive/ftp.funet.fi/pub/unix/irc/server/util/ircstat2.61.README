@@ -1,0 +1,103 @@
+IRCSTAT - Irc Server Statistics.
+
+
+NEW RELASE - 2.60-167 
+
+
+New stuff: 
+  -G    Also group the users when used Grouped Domains
+  fg    Floating Grouped Domains in the IDF file.
+
+
+Fixed stuff:
+  Yet Another Speedup.
+
+
+INTRO
+~~~~~
+IRCSTAT generates practical statistics over domains and users that  
+have connected to the local irc server. One has the option of filtering 
+away any unwanted information.
+
+The program is highly customable using a Ircstat Definition File (idf).
+In the IDF it's possible to have usertranslations, host/domain translations,
+userinformation, dominainformation.
+
+The IRCSTAT program is written in Perl, thus you need perl to run it.
+
+
+Normal use will give you a report like this (example taken from my server):
+
+  STATISTICS FOR IRC SERVER ALF.UIB.NO 9/10 92  10:17:7
+
+  Denne statistikken er laget p} grunnlag av hvor lenge en har v{rt
+  tilkobblet serveren. Dette er en mer korrekt form for statistikk 
+  enn } ta antall tilkoblinger.
+   
+[The introductory text i easy changeable. Sorry for the Norwegian :-)]
+
+  Log started: Mon Mar 31 02:03:56 1992 
+  Log ended:   Sun Sep  1 23:00:08 1992 
+
+
+  TOTAL INFORMATION
+  ^^^^^^^^^^^^^^^^
+  Total served time:              278 ds + 19:36:00
+  Number of sessions:            6797
+  Number of different domains:     63
+  Number of different users:      408
+  Number of different machines:   263
+
+
+
+  DOMAIN INFORMATION
+  ^^^^^^^^^^^^^^^^^^
+
+  Num  Domain name              Users   Logins     Connection time   Percent
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    1  bih.no                      53     1731   151 ds + 22:13:17     54.48
+    2  unit.no                    142     1830    52 ds + 17:16:29     18.90
+    3  felles.uib.no               25     1132    25 ds + 23:31:37      9.31
+    4  ii.uib.no                   67      699    23 ds + 23:29:04      8.60
+[... A lot of host/domains deleted ...]
+
+[... if a domain grouping was due, it may have looked like this ...]
+    1  bih.no                      53     1731   151 ds + 22:13:17     54.48
+    2  unit.no                    142     1830    52 ds + 17:16:29     18.90
+    3  felles.uib.no (GROUP)       25     1132    25 ds + 23:31:37      9.31
+	   taxus.uib.no         [  12      950    12 ds + 10:30:37     49.00 ]
+	     alf.uib.no         [  13      372    13 ds + 13:01:00     51.00 ]
+    4  ii.uib.no                   67      699    23 ds + 23:29:04      8.60
+
+
+  bih.no          - Bergen ingeni|rh|yskole.
+  unit.no         - Universitetet i Trondheim. AVH, NTH og PVV.
+  felles.uib.no   - Fellesresurs EDB senteret, UiB. (alf, taxus)
+  ii.uib.no       - Inst. for informatikk, Uiversitetet i Bergen.
+[... The domain information (taken form the idf file), comes out in the
+     same order as the domains themselves. Sorry about the Norwegian :-)
+     A lot of domains deleted ... ]
+
+
+  INDIVIDUAL USER INFORMATION
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  NOTE 1: ConvServ er en 24 timers IRC service som brukes til } konvertere
+	  mellom forsjellige enheter p} IRC. Dette er IKKE EN bruker, men et
+	  program eller en 'robot'.
+
+[... You may have information on users ...]
+
+  Num  Username                                Logins    Connection time
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[... usernames have been changed to protect the innocent ...]
+    1  ConvServ@bih.no                            216   79 ds + 22:37:07
+    2  someone@bih.no                             355   33 ds + 14:30:44
+    3  someone@felles.uib.no                      886   23 ds + 14:09:13
+    4  someone@unit.no                            107   19 ds + 08:59:40
+    5  someone@bih.no                             278   14 ds + 10:50:40
+
+[... A lot of users deleted ...]
+
+  240  users with less than 60 min. logintime     656    2 ds + 08:53:12
+
+

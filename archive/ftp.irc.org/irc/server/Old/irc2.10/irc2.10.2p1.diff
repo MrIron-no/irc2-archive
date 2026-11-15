@@ -1,0 +1,77 @@
+Index: irc/common/patchlevel.h
+diff -u irc/common/patchlevel.h:1.42 irc/common/patchlevel.h:1.42.2.1
+--- irc/common/patchlevel.h:1.42	Wed Feb  3 20:35:10 1999
++++ irc/common/patchlevel.h	Thu Feb 18 08:17:16 1999
+@@ -17,6 +17,6 @@
+  */
+ 
+ #ifndef	PATCHLEVEL
+-#define PATCHLEVEL "0210020000"		/* for server identification */
++#define PATCHLEVEL "0210020001"		/* for server identification */
+ #define DEVLEVEL 'b'
+ #endif
+Index: irc/iauth/mod_socks.c
+diff -u irc/iauth/mod_socks.c:1.11 irc/iauth/mod_socks.c:1.11.2.1
+--- irc/iauth/mod_socks.c:1.11	Mon Jan 18 16:38:59 1999
++++ irc/iauth/mod_socks.c	Thu Feb 18 08:06:19 1999
+@@ -18,7 +18,7 @@
+  */
+ 
+ #ifndef lint
+-static  char rcsid[] = "@(#)$Id: mod_socks.c,v 1.11 1999/01/18 21:38:59 kalt Exp $";
++static  char rcsid[] = "@(#)$Id: mod_socks.c,v 1.11.2.1 1999/02/18 13:06:19 kalt Exp $";
+ #endif
+ 
+ #include "os.h"
+@@ -195,25 +195,26 @@
+ 	
+ 	mydata = (struct socks_private *) malloc(sizeof(struct socks_private));
+ 	bzero((char *) mydata, sizeof(struct socks_private));
++	mydata->options = 0;
+ 	mydata->cache = NULL;
+ 	mydata->lifetime = CACHETIME;
+ 
+ 	tmpbuf[0] = txtbuf[0] = '\0';
+ 	if (strstr(self->opt, "log"))
+ 	    {
+-		mydata->options = OPT_LOG;
++		mydata->options |= OPT_LOG;
+ 		strcat(tmpbuf, ",log");
+ 		strcat(txtbuf, ", Log");
+ 	    }
+ 	if (strstr(self->opt, "reject"))
+ 	    {
+-		mydata->options = OPT_DENY;
++		mydata->options |= OPT_DENY;
+ 		strcat(tmpbuf, ",reject");
+ 		strcat(txtbuf, ", Reject");
+ 	    }
+ 	if (strstr(self->opt, "paranoid"))
+ 	    {
+-		mydata->options = OPT_PARANOID;
++		mydata->options |= OPT_PARANOID;
+ 		strcat(tmpbuf, ",paranoid");
+ 		strcat(txtbuf, ", Paranoid");
+ 	    }
+Index: irc/ircd/s_err.c
+diff -u irc/ircd/s_err.c:1.21 irc/ircd/s_err.c:1.21.2.1
+--- irc/ircd/s_err.c:1.21	Tue Jan 19 20:28:47 1999
++++ irc/ircd/s_err.c	Thu Feb 18 08:05:55 1999
+@@ -18,7 +18,7 @@
+  */
+ 
+ #ifndef lint
+-static  char rcsid[] = "@(#)$Id: s_err.c,v 1.21 1999/01/20 01:28:47 kalt Exp $";
++static  char rcsid[] = "@(#)$Id: s_err.c,v 1.21.2.1 1999/02/18 13:05:55 kalt Exp $";
+ #endif
+ 
+ #include "os.h"
+@@ -191,7 +191,7 @@
+ /* 322 */	{ RPL_LIST, "%s %d :%s" },
+ /* 323 */	{ RPL_LISTEND, ":End of /LIST" },
+ /* 324 */	{ RPL_CHANNELMODEIS, "%s %s %s" },
+-/* 325 */	{ RPL_UNIQOPIS, "%s %s %s" },
++/* 325 */	{ RPL_UNIQOPIS, "%s %s" },
+ 		{ 0, (char *)NULL },
+ 		{ 0, (char *)NULL },
+ 		{ 0, (char *)NULL },

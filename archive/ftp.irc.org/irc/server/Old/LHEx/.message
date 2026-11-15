@@ -1,0 +1,4 @@
+This directory contains LHEx, an authentication server that works in
+conjunction with ircd's iauth daemon.
+
+For more information, please read the README file.

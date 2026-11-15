@@ -1,0 +1,121 @@
+.\" @(#)$Id: iauth.conf.5,v 1.10 1999/03/11 20:22:07 kalt Exp $
+.TH IAUTH.CONF 5 "$Date: 1999/03/11 20:22:07 $"
+.SH NAME
+iauth.conf \- The Internet Relay Chat Authentication Configuration File
+.SH DESCRIPTION
+.LP
+The \fIiauth.conf\fP file is read by the \fIiauth\fP program upon startup,
+it contains the list of modules that should be used to authenticate a
+particular connection.  The list is ordered, which means that the first
+module to successfully authenticate a connection will be the last to be
+tried.
+
+The file is divided in sections, the first section is used for iauth
+options, each subsequent section specifies a module with eventual options
+using the following format:
+
+.RS
+.nf
+module\ \fImodule-name\fP
+[TAB]option = \fIstring\fP
+[TAB]host = \fIhost-name\fP
+[TAB]ip = \fIip-address\fP
+
+.fi
+.RE
+The section ends with an empty line.  The \fImodule-name\fP defines which
+module the section applies to.  A particular module may be used in several
+sections.  A \fIstring\fP of undefined format may be specified, it will
+then be passed to the module upon initialization, see the MODULES section
+to find out if a module accepts any option.
+
+If \fIhost-name\fP and \fIip-address\fP fields are specified, then the
+module will only be used for connections matching one of the fields given
+in the configuration.  An entry prefixed with the character ! indicates a
+negative match.  IP addresses are checked first.
+
+If no host nor ip entry is specified, then the module will always be used.
+
+When writing a configuration file, one should \fBalways\fP verify the
+syntax using the \fIiauth\fP program to avoid later problems.
+.SH IAUTH OPTIONS
+.TP
+.B required
+By specifying this keyword, the IRC server is told not to accept new user
+connections unless the authentication is handled by iauth.
+.TP
+.B notimeout
+By specifying this keyword, the IRC server is told not to accept new user
+connections if iauth hasn't finished its work in time.
+.TP
+.B shared <name> <mod_name.so>
+If iauth was compiled with Dynamically Shared Module support, it can be
+told to dynamically load a module using this option.  The module can then
+be loaded.
+.SH MODULES
+.TP
+.B pipe
+This module is provided as a replacement to the (now obsolete) R
+configuration lines supported by the IRC daemon.  It runs an external
+program with the client IP and port as arguments.  The program should
+output either 'Y' (Yes, let the client in), or 'N' (No, don't let them
+in).
+
+Note that this module is quite expensive as it forks a separate process for
+each connection received by the IRC daemon.
+
+This module requires the following option:
+.B prog=/path/to/external/program
+.TP
+.B socks
+This module performs a basic check to verify that the host where the
+connection originated from doesn't run a SOCKS v4 proxy server on port 1080
+that is open to the world.  It is useful to reject abusive clients using a
+relay to evade kill lines and bans.
+
+This module understands four options:
+.B reject
+to reject connections originating from a host where an open proxy
+was detected,
+.B log
+to log hostnames where an open proxy is detected.
+.B paranoid
+to consider proxies which deny the request because of a userid/ident
+mismatch to be OPEN proxies.
+.B cache[=value]
+to set the cache lifetime in minutes.  By default, caching is enabled for
+30 minutes.  A value of 0 disables caching.
+.TP
+.B rfc931
+This module is for authentication TCP connections using the protocol
+defined in RFC 1413 (which obsoletes RFC 931).
+.SH EXAMPLE
+The following file will cause the IRC daemon to reject all connections
+originating from a system where an open proxy is running for hosts within
+*.fr and *.enserb.u-bordeaux.fr but not for other hosts matching
+*.u-bordeaux.fr.  For all connections, an ident lookup (RFC 1413) will be
+performed.
+
+.RS
+.nf
+module socks
+        option = reject,paranoid
+        host = *.enserb.u-bordeaux.fr
+        host = !*.u-bordeaux.fr 
+        host = *.fr            
+
+module rfc931
+.fi
+.RE
+.SH COPYRIGHT
+(c) 1998 Christophe Kalt
+.LP
+For full COPYRIGHT see LICENSE file with IRC package.
+.LP
+.RE
+.SH FILES
+ "iauth.conf"
+.SH "SEE ALSO"
+iauth(8)
+.SH AUTHOR
+Christophe Kalt.

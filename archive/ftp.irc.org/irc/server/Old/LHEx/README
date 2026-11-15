@@ -1,0 +1,92 @@
+LHEx 0.2a
+=========
+
+This is release 0.2a of LHEx. This software is of alpha quality, and
+expected to contain many bugs. Please report any bugs (with fixes, if
+possible) to Andrew Snare (ajs@pigpond.com).
+
+What is LHEx?
+-------------
+
+LHEx is an authentication service for IRC servers. It consists of two
+parts:
+	1) An iauth module (mod_lhex) that communicates with LHEx;
+	2) The LHEx server (this package).
+
+It allows one to report incidents via a web-interface. An incident
+report allows one to store logs of the incident and other information, 
+as well as a set of bans that should be applied as a result of the
+ban. In this context, a ban is equivalent to and performs the same
+role as K-Lines currently do.
+
+An important aspect of the system is that when an incident report is
+made, an expiry and review-date is set. This means that the bans
+associated with an incident automatically expire, and periodic review
+can also be undertaken.
+
+Features:
+
+	o Easy-to-use web interface;
+	o Central location for storing all information pertaining to
+	  an incident;
+	o Bans that expire or can be reviewed;
+	o Accountability.
+
+Caveats:
+
+	o LHEx can't kill clients already on IRC (like K-Lines do)
+	  when an incident report is made;
+	o The code for reviewing incidents is not in place yet.
+
+System Requirements
+-------------------
+
+LHEx is implemented purely in Python. Hence you need to have python
+installed. Version 1.5.2 or later is best -- earlier versions might
+work but have not been tested. The mod_lhex iauth module that
+communicates with LHEx is included in the ircd distribution
+from version 2.10.3a4 onwards. In addition if you wish for LHEx to be 
+able to tell a connection that they're banned, ircd needs to be
+patched to recognize some new iauth protocol messages.
+
+No web-server is needed -- LHEx uses its own one.
+
+Installation
+------------
+
+Installation is fairly simple -- LHEx is designed to run straight out
+of the directory you unpack it into.
+
+To configure LHEx before use, edit the file lib/python/Config/config.py
+within the directory you unpacked LHEx into. The format of this file
+should be self-explanatory. Anything that is valid Python will work
+but it should be possible to edit this file without knowing Python.
+
+Starting LHEx
+-------------
+
+The LHEx server is started by executing the LHEx script in the
+directory you unpacked LHEx into. Scripts are also provided to kill
+the LHEx server, or restart it.
+
+By default, the LHEx web-server listens on port 9673. LHEx itself also
+listens on port 9674 for authentication requests from
+iauth/mod_lhex. To start using LHEx, simply point your web-browser at
+http://your.host:9673/ -- using the web interface should be fairly
+straight forward and simple. The initial password for the admin user
+(name specified in the config file mentioned above) is "epr0cks".
+
+Since this is an alpha version of LHEx, a lot of information is
+printed by various components of the system. Most of this harmless and 
+can be safely ignored.
+
+Acknowledgments
+---------------
+
+This software makes heavy use of (and includes) software components
+developed by Digital Creations (http://www.digicool.com) and released
+as Bobo. The Bobo software has since been incorporated into Zope
+(formerly Principia). Anyone developing web-based applications should
+check out http://www.zope.org/ and be prepared for a pleasant
+surprise. Certainly the existence of Zope made the development of LHEx
+a lot easier.

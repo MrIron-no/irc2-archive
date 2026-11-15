@@ -1,0 +1,34 @@
+Index: ircd/s_serv.c
+===================================================================
+RCS file: /usr/local/repository/irc/ircd/s_serv.c,v
+retrieving revision 1.239
+retrieving revision 1.240
+diff -p -u -r1.239 -r1.240
+--- s_serv.c	2004/10/04 20:29:13	1.239
++++ s_serv.c	2004/10/04 23:05:06	1.240
+@@ -990,7 +990,7 @@ int	m_server_estab(aClient *cptr, char *
+ 	{
+ 		bysptr = find_uid(cptr->serv->byuid, NULL);
+ 		/* we are interrested only in *remote* opers */
+-		if (MyConnect(bysptr))
++		if (bysptr && MyConnect(bysptr))
+ 		{
+ 			bysptr = NULL;
+ 		}
+Index: ircd/s_bsd.c
+===================================================================
+RCS file: /usr/local/repository/irc/ircd/s_bsd.c,v
+retrieving revision 1.162
+retrieving revision 1.163
+diff -u -r1.162 -r1.163
+--- s_bsd.c	2004/10/02 01:20:44	1.162
++++ s_bsd.c	2004/10/05 00:11:13	1.163
+@@ -177,7 +177,7 @@
+ 		cptr->serv && cptr->serv->byuid[0])
+ 	{
+ 		bysptr = find_uid(cptr->serv->byuid, NULL);
+-		if (!MyConnect(bysptr))
++		if (bysptr && !MyConnect(bysptr))
+ 		{
+ 			fmbuf[0] = '\0';
+ 			strcpy(fmbuf, ":%s NOTICE %s :");

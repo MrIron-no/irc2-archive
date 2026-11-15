@@ -1,0 +1,11 @@
+00README		This file
+IrcdCounts-1.2.tar.gz	Scripts to get info about server userbase
+analog			Perl script to report IRC usage from userlog
+irccheck-1.0.tar.gz	Perl script to check/restart IRC server (Nov 8 1993)
+ircstat2.6*.README	IRC statistics program document
+ircstat2.6*.tar.gz	IRC statistics program in perl
+ircstat2.7*.README	IRC statistics program document
+ircstat2.7*.tar.gz	IRC statistics program in perl for 2.8 and above
+ircstat3.*.tar.gz	IRC statistics program in perl (2.8.21)
+ircstat3.*.README	IRC statistics program document
+m4ext-2.1.tar.gz	Ircd.conf extended m4 macros (Nov 15 1993)

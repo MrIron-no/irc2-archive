@@ -1,0 +1,11 @@
+This file describes the content of freebsd.ircd.2821.patches.tar.gz.
+This patches are taken from FreeBSD-current/ports/net/irc/patches, 
+where *current* is test version of FreeBSD 32 bit OS for x386 computers.
+This patches has been tested on working irc server with versions
+2.8.21, 2.8.21+E1, ircd/digipl3l and usefull to compile ircd on BSD
+machines.
+
+Suggested catalogue: ftp://ftp.funet.fi/pub/unix/irc/server/patches/.
+Uploader: mishania@demos.su <Mikhail A. Sokolov>
+Date: Apr 8 1996.
+

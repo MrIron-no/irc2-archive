@@ -1,0 +1,79 @@
+IRCSTAT - Irc Server Statistics.
+
+NEW RELASE - 3.15-007 ( Sun Jan 29 21:06:34 GMT 1995)
+
+New stuff: 
+
+Fixed stuff (bugreporters are in paranthesis):
+  - dycount 
+      Created manpage
+      Fixed a typo (vesa)
+  - totdays
+      Fixed IDENT bugs (vesa)
+  - newdoms
+      Fixed IP# bug
+
+
+INTRO
+~~~~~
+IRCSTAT generates practical statistics over domains and users that  
+have connected to the local irc server. One has the option of filtering 
+away any unwanted information.
+
+The program is highly customable using a Ircstat Definition File (idf).
+In the IDF it's possible to have usertranslations, host/domain translations,
+userinformation, dominainformation.
+
+The IRCSTAT program is written in Perl, thus you need perl to run it.
+
+
+HOW TO INSTALL AND CONFIGURE IRCSTAT
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Run the "Configure" script as   perl Configure   and answer the questions
+asked. The script will also install the binaries and manpages if so is
+desired.
+
+
+OTHER PROGRAMS IN THIS PACKAGE
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+logexc     A program to extract from the userlog.
+  If you run  regional stats, this is _THE_ script to use to extract and
+  send LAST months userlog to the person who is doing the regional stat
+  work.
+
+totdays    A program to sum-up days from a userlogfile.
+  IRCNO is using this script to ensure that certain servers do have the 
+  correct amount of klient-served days in a month.
+  It is also better to run this instead of ircstat if you  only wants 
+  totalinformation.
+
+newdoms    A program that extract domains that are not in the IDF file.
+  If you have run ircstat on a 400.000 line logfile and then find out that
+  there are a coupple of new domains it's a pain to re-run the ircstat on
+  those 400.000 lines. Run newdoms prior to ircstat.
+
+farnear    A program to analyze wich domains are using your server.
+  Have you ever wondered about wich domains net-vice that is using your
+  server? This is espesially usefull in a given geographical region.
+
+timecount  A program that will provide you with data on how the server is
+  used dyring the day.
+
+dycount    A program that will provide you with data on how the server is
+  used on a dayly basis during a given period.
+
+
+EMAIL LIST FOR IRCSTAT
+~~~~~~~~~~~~~~~~~~~~~~
+There exists a ircstat mailinglist. This list is for discussion of the
+ircstat software-suite, bugreporting and such stuff.
+
+Request address: ircstat-requst@vestnett.no
+Listaddress:     ircstat@vestnett.no
+
+
+NEWEST RELEASRE OF IRCSTAT
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Is always found on ftp:ftp.vestnett.no/pub/vestnett/ruben/ircstat* or
+ftp:ftp.funet.fi/pub/unix/irc/server/util/ircstat*
+

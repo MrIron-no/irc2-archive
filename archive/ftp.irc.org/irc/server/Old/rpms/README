@@ -1,0 +1,33 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+These RPM packages are designed to make the ircd run in a chrooted
+environments. This should be enough if you are a fascist :-)
+
+Please send comments and suggestions to Mihai Ibanescu <misa@necomm.ro>
+My GPG key can be found at
+ftp://coyote.is.necomm.ro/pub/misa.gpg.asc
+
+Name        : ircd                         Relocations: (not relocateable)
+Version     : 2.10.3                            Vendor: (none)
+Release     : 1                             Build Date: Thu Jan 20 12:11:12 2000
+Install date: (not installed)               Build Host: roadrunner.is.necomm.ro
+Group       : System Environment/Daemons    Source RPM: ircd-2.10.3-1.src.rpm
+Size        : 2314676                          License: GPL
+Packager    : Mihai Ibanescu <misa@necomm.ro>
+Summary     : irc server from ftp.irc.org
+Description :
+ircd is the server (daemon) program for the Internet Relay Chat
+Program. The ircd is a server in that its function is to "serve"
+the client program irc(1) with messages and commands.
+All commands and user messages are passed directly to the ircd
+for processing and relaying to other ircd sites.
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.0.1 (GNU/Linux)
+Comment: For info see http://www.gnupg.org
+
+iD8DBQE4kIfS4GwG7mFIIjsRAiYMAJ9FnOMDtDCudOQAm1/dFXN6Ploi4wCfUFTR
+9e7K72Q8MLSlMU7M6h+WVRg=
+=pYju
+-----END PGP SIGNATURE-----

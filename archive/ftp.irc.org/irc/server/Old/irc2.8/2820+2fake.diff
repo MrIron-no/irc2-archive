@@ -1,0 +1,131 @@
+This patch is meant for irc2.8.20.tar.gz package. Applying it
+shouldn't break any old code. The following little changes
+1) stop Fake notices being printed for desynched users/channels
+   (IMHO they are waste of resources on hub)
+2) comply with ident protocol (RFC 1413). Distribution server uses
+   identd reply in place of username. But the RFC says that ident
+   reply should never be used as user identification. So with the
+   following patches username given by client is used. Ident reply
+   is still stored in userlog, and is also available by /stats L.
+3) TRACE shows class summary for all users with +w flag set on
+   (WALLOPS) instead of opers only. 
+
+To install this run "patch -p0 < 2820+2fake.diff" in the same directory
+where source was unpacked and tune your config.h as you wish
+
+Vesa.Ruokonen@lut.fi
+
+diff -c2 -r orig/irc2.8.20/include/config.h irc2.8.20/include/config.h
+*** orig/irc2.8.20/include/config.h	Thu Jun  9 17:29:47 1994
+--- irc2.8.20/include/config.h	Thu Jun  9 19:55:29 1994
+***************
+*** 359,362 ****
+--- 359,366 ----
+  #undef	IRCII_KLUDGE
+  
++ #define FOLLOW_IDENT_RFC
++ #define HIDE_FAKES
++ #define TRACE_STATS
++ 
+  /*   STOP STOP STOP STOP STOP STOP STOP STOP STOP STOP STOP STOP STOP STOP  */
+  
+diff -c2 -r orig/irc2.8.20/include/patchlevel.h irc2.8.20/include/patchlevel.h
+*** orig/irc2.8.20/include/patchlevel.h	Thu Jun  9 17:30:52 1994
+--- irc2.8.20/include/patchlevel.h	Thu Jun  9 19:42:09 1994
+***************
+*** 18,21 ****
+  
+  #ifndef	PATCHLEVEL
+! #define PATCHLEVEL "2.8.20"
+  #endif
+--- 18,21 ----
+  
+  #ifndef	PATCHLEVEL
+! #define PATCHLEVEL "2.8.20+2fake"
+  #endif
+diff -c2 -r orig/irc2.8.20/ircd/channel.c irc2.8.20/ircd/channel.c
+*** orig/irc2.8.20/ircd/channel.c	Thu Jun  9 17:18:59 1994
+--- irc2.8.20/ircd/channel.c	Thu Jun  9 19:43:26 1994
+***************
+*** 545,550 ****
+--- 545,552 ----
+  		    (mcount < 0))
+  		    {
++ #ifndef HIDE_FAKES
+  			sendto_ops("Fake: %s MODE %s %s %s",
+  				   parv[0], parv[1], modebuf, parabuf);
++ #endif
+  			ircstp->is_fake++;
+  		    }
+diff -c2 -r orig/irc2.8.20/ircd/s_debug.c irc2.8.20/ircd/s_debug.c
+*** orig/irc2.8.20/ircd/s_debug.c	Mon May  2 14:50:21 1994
+--- irc2.8.20/ircd/s_debug.c	Thu Jun  9 19:47:41 1994
+***************
+*** 38,44 ****
+  'C',
+  #endif
+- #ifdef	DO_ID
+- 'd',
+- #endif
+  #ifdef	DEBUGMODE
+  'D',
+--- 38,41 ----
+***************
+*** 50,56 ****
+  'E',
+  #endif
+! #ifdef	NOTE_FORWARDER
+  'f',
+  #endif
+  #ifdef	HUB
+  'H',
+--- 47,56 ----
+  'E',
+  #endif
+! #ifdef	FOLLOW_IDENT_RFC
+  'f',
+  #endif
++ #ifdef  HIDE_FAKES
++ 'F',
++ #endif
+  #ifdef	HUB
+  'H',
+***************
+*** 98,101 ****
+--- 98,104 ----
+  #ifdef	OPER_REMOTE
+  't',
++ #endif
++ #ifdef  TRACE_STATS
++ 'T',
+  #endif
+  #ifdef	IRCII_KLUDGE
+diff -c2 -r orig/irc2.8.20/ircd/s_serv.c irc2.8.20/ircd/s_serv.c
+*** orig/irc2.8.20/ircd/s_serv.c	Sat May 28 21:50:59 1994
+--- irc2.8.20/ircd/s_serv.c	Thu Jun  9 19:48:56 1994
+***************
+*** 1761,1765 ****
+--- 1761,1769 ----
+           * and messy when done remotely - Avalon
+           */
++ #ifndef TRACE_STATS
+         	if (!IsAnOper(sptr) || !cnt)
++ #else
++         if (!SendWallops(sptr) || !cnt)
++ #endif
+  	    {
+  		if (cnt)
+diff -c2 -r orig/irc2.8.20/ircd/s_user.c irc2.8.20/ircd/s_user.c
+*** orig/irc2.8.20/ircd/s_user.c	Tue May 31 19:05:53 1994
+--- irc2.8.20/ircd/s_user.c	Thu Jun  9 19:50:09 1994
+***************
+*** 358,363 ****
+--- 358,365 ----
+  			
+  		    }
++ #ifndef FOLLOW_IDENT_RFC
+  		else if (sptr->flags & FLAGS_GOTID)
+  			strncpyzt(user->username, sptr->username, USERLEN+1);
++ #endif
+  		else
+  			strncpyzt(user->username, username, USERLEN+1);

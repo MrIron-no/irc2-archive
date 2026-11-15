@@ -1,0 +1,7 @@
+This directory contains the official IRC Software release
+
+RELEASE_NOTES			- Release notes from the latest release
+
+irc2.11.2p3.tgz			- Latest release 
+
+zlib/				- compression library used by the server

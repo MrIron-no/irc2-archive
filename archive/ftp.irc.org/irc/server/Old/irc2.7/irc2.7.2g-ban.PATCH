@@ -1,0 +1,40 @@
+From avalon@coombs.anu.edu.au Thu Aug 27 21:18:33 1992
+From: avalon@coombs.anu.edu.au (Darren Reed)
+Subject: channel mode propogation bug..
+To: operlist@eff.org (Operator Mailing List)
+Date: Fri, 21 Aug 92 16:29:54 EST
+Reply-To: avalon@coombs.anu.edu.au
+X-Mailer: ELM [version 2.3 PL11]
+
+
+There is a bug in the propogation of long banmodes when servers reconnect
+which causes the mode string to become corrupt.  The below diff should
+fix this problem.
+
+The following fixes it.  The diff comes from 2.7.2g but the bug extends
+back further (how far I'm not sure).
+
+avalon
+
+*** channel.c.orig	Fri Aug 21 16:22:20 1992
+--- channel.c	Fri Aug 21 16:23:34 1992
+***************
+*** 389,395
+  	    }
+  	for (link = chptr->banlist ; link; )
+  	    {
+! 		if (strlen(parabuf) + strlen(acptr->name) + 10 <
+  		    MODEBUFLEN)
+  		    {
+  			strcat(parabuf, " ");
+
+--- 389,395 -----
+  	    }
+  	for (link = chptr->banlist ; link; )
+  	    {
+! 		if (strlen(parabuf) + strlen(link->value.cp) + 10 <
+  		    MODEBUFLEN)
+  		    {
+  			strcat(parabuf, " ");
+
+

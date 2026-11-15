@@ -1,0 +1,20 @@
+*** channel.c.orig	Fri Aug 21 16:22:20 1992
+--- channel.c	Fri Aug 21 16:23:34 1992
+***************
+*** 389,395
+  	    }
+  	for (link = chptr->banlist ; link; )
+  	    {
+! 		if (strlen(parabuf) + strlen(acptr->name) + 10 <
+  		    MODEBUFLEN)
+  		    {
+  			strcat(parabuf, " ");
+
+--- 389,395 -----
+  	    }
+  	for (link = chptr->banlist ; link; )
+  	    {
+! 		if (strlen(parabuf) + strlen(link->value.cp) + 10 <
+  		    MODEBUFLEN)
+  		    {
+  			strcat(parabuf, " ");

@@ -1,0 +1,405 @@
+From owner-operlist@eff.org Fri Dec 18 02:53:52 1992
+Received: from eff.org by coombs.anu.edu.au (5.61/1.0)
+	id AA05193; Fri, 18 Dec 92 02:53:44 +1100
+Received: by eff.org id AA18768
+ (5.65c/IDA-1.4.4/pen-ident for oper-inbox); Thu, 17 Dec 1992 10:50:35 -0500 
+Received: from coombs.anu.edu.au by eff.org with SMTP id AA18764
+ (5.65c/IDA-1.4.4/pen-ident for <operlist@eff.org>); Thu, 17 Dec 1992 10:50:28 -0500 
+Received: by coombs.anu.edu.au (5.61/1.0)
+	id AA04894; Fri, 18 Dec 92 02:50:06 +1100
+Date: Fri, 18 Dec 92 02:50:06 +1100
+From: avalon@coombs.anu.edu.au (Darren Reed)
+Message-Id: <9212171550.AA04894@coombs.anu.edu.au>
+To: operlist@eff.org
+Subject: Patch for 2.7.2g: SunOS problem with stdio and >128 files open
+Status: O
+
+
+For those using SunOS, you might like to consider applying this patch
+if you ever find yourself approaching 120 or so clients attached to
+the server.  The problem is a bug in the SunOS4 stdio libc which will
+cause the server to crash upon opening fd 128.  This patch removes use
+of the stdio file functions from the server.
+
+Apply in the directory with "ircd" and "common" subdirs.
+
+-avalon
+
+*** ircd/s_conf.c.orig	Sat Dec 12 06:46:58 1992
+--- ircd/s_conf.c	Sat Dec 12 06:58:50 1992
+***************
+*** 57,62
+  #include <stdio.h>
+  #include "netdb.h"
+  #include <sys/socket.h>
+  #ifdef __hpux
+  #include "inet.h"
+  #endif
+
+--- 57,63 -----
+  #include <stdio.h>
+  #include "netdb.h"
+  #include <sys/socket.h>
++ #include <fcntl.h>
+  #ifdef __hpux
+  #include "inet.h"
+  #endif
+***************
+*** 482,488
+  int 	initconf(rehashing)
+  int rehashing;
+      {
+! 	FILE *fd;
+  	char line[512], *tmp, c[80];
+  	int ccount = 0, ncount = 0;
+  	aConfItem *aconf;
+
+--- 483,489 -----
+  int 	initconf(rehashing)
+  int rehashing;
+      {
+! 	int fd;
+  	char line[512], *tmp, c[80];
+  	int ccount = 0, ncount = 0;
+  	aConfItem *aconf;
+***************
+*** 489,495
+  	struct hostent *hp;
+  
+  	debug(DEBUG_DEBUG, "initconf(%d)", rehashing);
+! 	if (!(fd = fopen(configfile,"r")))
+  		return(-1);
+  	while (fgets(line,sizeof(line)-1,fd))
+  	    {
+
+--- 490,496 -----
+  	struct hostent *hp;
+  
+  	debug(DEBUG_DEBUG, "initconf(%d)", rehashing);
+! 	if ((fd = open(configfile, O_RDONLY)) == -1)
+  		return(-1);
+  	while (dgets(fd,line,sizeof(line)-1)>0)
+  	    {
+***************
+*** 491,497
+  	debug(DEBUG_DEBUG, "initconf(%d)", rehashing);
+  	if (!(fd = fopen(configfile,"r")))
+  		return(-1);
+! 	while (fgets(line,sizeof(line)-1,fd))
+  	    {
+  		if (line[0] == '#' || line[0] == '\n' ||
+  		    line[0] == ' ' || line[0] == '\t')
+
+--- 492,498 -----
+  	debug(DEBUG_DEBUG, "initconf(%d)", rehashing);
+  	if ((fd = open(configfile, O_RDONLY)) == -1)
+  		return(-1);
+! 	while (dgets(fd,line,sizeof(line)-1)>0)
+  	    {
+  		if (line[0] == '#' || line[0] == '\n' ||
+  		    line[0] == ' ' || line[0] == '\t')
+***************
+*** 500,506
+  
+  		if (tmp = (char *)index(line, '\n'))
+  			*tmp = 0;
+! 		else while(fgets(c, sizeof(c), fd))
+  		    {
+  			if (tmp = (char *)index(c, '\n'))
+  				*tmp= 0;
+
+--- 501,507 -----
+  
+  		if (tmp = (char *)index(line, '\n'))
+  			*tmp = 0;
+! 		else while(dgets(fd, c, sizeof(c))>0)
+  		    {
+  			if (tmp = (char *)index(c, '\n'))
+  				*tmp= 0;
+***************
+*** 694,700
+  		      aconf->status, aconf->host, aconf->passwd,
+  		      aconf->name, aconf->port, Class(aconf));
+  	    }
+! 	fclose(fd);
+  	check_class();
+  	nextping = nextconnect = time(NULL);
+  	return (0);
+
+--- 695,701 -----
+  		      aconf->status, aconf->host, aconf->passwd,
+  		      aconf->name, aconf->port, Class(aconf));
+  	    }
+! 	close(fd);
+  	check_class();
+  	nextping = nextconnect = time(NULL);
+  	return (0);
+*** ircd/s_misc.c.orig	Sat Dec 12 06:46:58 1992
+--- ircd/s_misc.c	Sat Dec 12 06:49:40 1992
+***************
+*** 31,36
+  #include "sys.h"
+  #include "numeric.h"
+  #include <sys/stat.h>
+  #ifdef HPUX
+  # include <sys/syscall.h>
+  # define getrusage(a,b) syscall(SYS_GETRUSAGE, a, b)
+
+--- 31,37 -----
+  #include "sys.h"
+  #include "numeric.h"
+  #include <sys/stat.h>
++ #include <fcntl.h>
+  #ifdef HPUX
+  # include <sys/syscall.h>
+  # define getrusage(a,b) syscall(SYS_GETRUSAGE, a, b)
+***************
+*** 297,304
+  				sptr->user->username, sptr->user->host);
+  # else
+  	    {
+! 		FILE *userlogfile;
+! 		struct stat stbuf;
+  
+  		/*
+   		 * This conditional makes the logfile active only after
+
+--- 298,305 -----
+  				sptr->user->username, sptr->user->host);
+  # else
+  	    {
+! 		int	userlogfile;
+! 		char	linebuf[160];
+  
+  		/*
+   		 * This conditional makes the logfile active only after
+***************
+*** 310,317
+  		 * file in 3 seconds. -avalon (curtesy of wumpus)
+  		 */
+  		alarm(3);
+! 		if (IsPerson(sptr) && !stat(FNAME_USERLOG, &stbuf) &&
+! 		    (userlogfile = fopen(FNAME_USERLOG, "a")))
+  		    {
+  			alarm(0);
+  			fprintf(userlogfile, "%s (%3d:%02d:%02d): %s@%s\n",
+
+--- 311,318 -----
+  		 * file in 3 seconds. -avalon (curtesy of wumpus)
+  		 */
+  		alarm(3);
+! 		if (IsPerson(sptr) &&
+! 		    (userlogfile = open(FNAME_USERLOG, O_WRONLY|O_APPEND)))
+  		    {
+  			alarm(0);
+  			sprintf(linebuf, "%s (%3d:%02d:%02d): %s@%s\n",
+***************
+*** 314,320
+  		    (userlogfile = fopen(FNAME_USERLOG, "a")))
+  		    {
+  			alarm(0);
+! 			fprintf(userlogfile, "%s (%3d:%02d:%02d): %s@%s\n",
+  				myctime(sptr->firsttime),
+  				on_for / 3600, (on_for % 3600)/60,
+  				on_for % 60,
+
+--- 315,321 -----
+  		    (userlogfile = open(FNAME_USERLOG, O_WRONLY|O_APPEND)))
+  		    {
+  			alarm(0);
+! 			sprintf(linebuf, "%s (%3d:%02d:%02d): %s@%s\n",
+  				myctime(sptr->firsttime),
+  				on_for / 3600, (on_for % 3600)/60,
+  				on_for % 60,
+***************
+*** 319,325
+  				on_for / 3600, (on_for % 3600)/60,
+  				on_for % 60,
+  				sptr->user->username, sptr->user->host);
+! 			fclose(userlogfile);
+  		    }
+  		alarm(0);
+  		/* Modification by stealth@caen.engin.umich.edu */
+
+--- 320,327 -----
+  				on_for / 3600, (on_for % 3600)/60,
+  				on_for % 60,
+  				sptr->user->username, sptr->user->host);
+! 			write(userlogfile, linebuf, strlen(linebuf));
+! 			close(userlogfile);
+  		    }
+  		alarm(0);
+  		/* Modification by stealth@caen.engin.umich.edu */
+*** ircd/s_msg.c.orig	Sat Dec 12 06:46:58 1992
+--- ircd/s_msg.c	Sat Dec 12 06:59:14 1992
+***************
+*** 35,40
+  #include "msg.h"
+  #include "channel.h"
+  #include <sys/stat.h>
+  #include <stdio.h>
+  #include <utmp.h>
+  #ifdef IDENT
+
+--- 35,41 -----
+  #include "msg.h"
+  #include "channel.h"
+  #include <sys/stat.h>
++ #include <fcntl.h>
+  #include <stdio.h>
+  #include <utmp.h>
+  #ifdef IDENT
+***************
+*** 3200,3206
+  int parc;
+  char *parv[];
+      {
+! 	FILE *fptr;
+  	char line[80], *tmp;
+  
+  	if (check_registered(sptr))
+
+--- 3201,3207 -----
+  int parc;
+  char *parv[];
+      {
+! 	int fd;
+  	char line[80], *tmp;
+  
+  	if (check_registered(sptr))
+***************
+*** 3218,3224
+  	 * 3 seconds. -avalon (curtesy of wumpus)
+  	 */
+  	alarm(3);
+! 	if (!(fptr = fopen(MOTD, "r")))
+  	    {
+  		alarm(0);
+  		sendto_one(sptr,
+
+--- 3219,3225 -----
+  	 * 3 seconds. -avalon (curtesy of wumpus)
+  	 */
+  	alarm(3);
+! 	if (!(fd = open(MOTD, O_RDONLY)))
+  	    {
+  		alarm(0);
+  		sendto_one(sptr,
+***************
+*** 3229,3235
+  	alarm(0);
+  	sendto_one(sptr, ":%s NOTICE %s :MOTD - %s Message of the Day - ",
+  		me.name, parv[0], me.name);
+! 	while (fgets(line, 80, fptr))
+  	    {
+  		if (tmp = (char *)index(line,'\n'))
+  			*tmp = '\0';
+
+--- 3230,3236 -----
+  	alarm(0);
+  	sendto_one(sptr, ":%s NOTICE %s :MOTD - %s Message of the Day - ",
+  		me.name, parv[0], me.name);
+! 	while (dgets(fd, line, sizeof(line) - 1))
+  	    {
+  		if (tmp = (char *)index(line,'\n'))
+  			*tmp = '\0';
+***************
+*** 3240,3246
+  	    }
+  	sendto_one(sptr, ":%s NOTICE %s :* End of /MOTD command.",
+  		   me.name, parv[0]);
+! 	fclose(fptr);
+  #endif
+  	return 0;
+      }
+
+--- 3241,3247 -----
+  	    }
+  	sendto_one(sptr, ":%s NOTICE %s :* End of /MOTD command.",
+  		   me.name, parv[0]);
+! 	close(fd);
+  #endif
+  	return 0;
+      }
+*** common/support.c.orig	Sat Dec 12 06:53:06 1992
+--- common/support.c	Sat Dec 12 06:53:12 1992
+***************
+*** 347,349
+  		};
+  
+  #endif
+
+--- 347,418 -----
+  		};
+  
+  #endif
++ 
++ 
++ /*
++ ** read a string terminated by \r or \n in from a fd
++ **
++ ** Created: Sat Dec 12 06:29:58 EST 1992 by avalon
++ */
++ int	dgets(fd, buf, num)
++ int	fd, num;
++ char	*buf;
++ {
++ 	static	char	dgbuf[8192];
++ 	static	char	*head = dgbuf, *tail = dgbuf;
++ 	static	int	eof = 0;
++ 	register char	*s, *t;
++ 	register int	n, nr;
++ 
++ 	/*
++ 	** Sanity checks.
++ 	*/
++ 	if (!num)
++ 		return 0;
++ 	if (num > sizeof(dgbuf) - 1)
++ 		num = sizeof(dgbuf) - 1;
++ dgetsagain:
++ 	/*
++ 	** check input buffer for EOL and if present return string.
++ 	*/
++ 	if (head < tail &&
++ 	    ((s = index(head, '\n')) || (s= index(head, '\r'))) && s < tail)
++ 	    {
++ 		n = MIN(s - head + 1, num);	/* at least 1 byte */
++ dgetsreturnbuf:
++ 		bcopy(head, buf, n);
++ 		head += n;
++ 		if (head == tail)
++ 			head = tail = dgbuf;
++ 		return n;
++ 	    }
++ 
++ 	if (tail - head >= num)		/* dgets buf is big enough */
++ 	    {
++ 		n = num;
++ 		goto dgetsreturnbuf;
++ 	    }
++ 
++ 	if (head != dgbuf)
++ 	    {
++ 		for (nr = head - dgbuf, s = head, t = dgbuf; nr > 0; nr--)
++ 			*t++ = *s++;
++ 		tail = --t;
++ 	    }
++ 	n = sizeof(dgbuf) - (tail - dgbuf) - 1;
++ 	nr = read(fd, tail, n);
++ 	if (nr == -1)
++ 		return -1;
++ 	if (!nr)
++ 	    {
++ 		if (head < tail)
++ 		    {
++ 			n = MIN(head - tail, num);
++ 			goto dgetsreturnbuf;
++ 		    }
++ 		return 0;
++ 	    }
++ 	tail += nr;
++ 	*(tail + 1) = '\0';
++ 	goto dgetsagain;
++ }
+

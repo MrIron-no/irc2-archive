@@ -1,0 +1,163 @@
+From owner-operlist@eff.org Fri Apr  2 09:54 EET 1993
+Received: from lut.fi by cc.lut.fi with SMTP
+	(5.61/IDA-1.2.8+Kim) id AA18931; Fri, 2 Apr 93 09:54:28 +0200
+Received: from eff.org by lut.fi with SMTP
+	(5.65c8/IDA-1.4.4/Kim-2.2) id AA17491; Fri, 2 Apr 1993 10:54:23 +0300
+Received: by eff.org id AA28017
+ (5.65c/IDA-1.4.4/pen-ident for oper-inbox); Fri, 2 Apr 1993 02:52:58 -0500 
+Received: from coombs.anu.edu.au by eff.org with SMTP id AA28002
+ (5.65c/IDA-1.4.4/pen-ident for <operlist@eff.org>); Fri, 2 Apr 1993 02:52:49 -0500 
+Received: by coombs.anu.edu.au (5.61/1.0)
+	id AA18644; Fri, 2 Apr 93 17:52:55 +1000
+From: avalon@coombs.anu.edu.au (Darren Reed)
+Message-Id: <9304020752.AA18644@coombs.anu.edu.au>
+Subject: Patch for irc2.7.2h
+To: operlist@eff.org (Operator Mailing List)
+Date: Fri, 2 Apr 93 17:52:54 EST
+Reply-To: avalon@coombs.anu.edu.au
+X-Mailer: ELM [version 2.3 PL11]
+X-Charset: FI
+X-Char-Esc: 29
+Status: RO
+
+
+To fix the problem with 2.7 servers stuffing up on L-lines when interacting
+with 2.8 servers, I've rolled out the patch below.
+
+It also fixes a few other things which are going to mean #3 for 2.8 :-/
+flargh.
+
+The patch below should be applied to release 2.7.2h and brings it up to
+2.7.2i.  Wheee.
+
+avalon
+
+*** ircd/s_misc.c.orig	Fri Apr  2 17:36:33 1993
+--- ircd/s_misc.c	Fri Apr  2 17:38:41 1993
+***************
+*** 312,318
+  		 */
+  		alarm(3);
+  		if (IsPerson(sptr) &&
+! 		    (userlogfile = open(FNAME_USERLOG, O_WRONLY|O_APPEND)))
+  		    {
+  			alarm(0);
+  			sprintf(linebuf, "%s (%3d:%02d:%02d): %s@%s\n",
+
+--- 312,318 -----
+  		 */
+  		alarm(3);
+  		if (IsPerson(sptr) &&
+! 		    (userlogfile=open(FNAME_USERLOG,O_WRONLY|O_APPEND))!=-1)
+  		    {
+  			alarm(0);
+  			sprintf(linebuf, "%s (%3d:%02d:%02d): %s@%s\n",
+*** ircd/s_msg.c.orig	Fri Apr  2 17:36:49 1993
+--- ircd/s_msg.c	Fri Apr  2 17:40:46 1993
+***************
+*** 1534,1540
+         ** See if the newly found server is behind a guaranteed
+         ** leaf (L-line). If so, close the link.
+         */
+!       if (aconf = find_conf_name(sptr->name, CONF_LEAF))
+  	  if (aconf->port == 0 || hop >= aconf->port)
+  	    {
+  	      sendto_ops("Leaf-only link %s issued second server command",
+
+--- 1534,1540 -----
+         ** See if the newly found server is behind a guaranteed
+         ** leaf (L-line). If so, close the link.
+         */
+!       if (aconf = find_conf_name(cptr->name, CONF_LEAF))
+  	  if (aconf->port == 0 || hop >= aconf->port)
+  	    {
+  	      sendto_ops("Leaf-only link %s issued second server command",
+***************
+*** 1538,1544
+  	  if (aconf->port == 0 || hop >= aconf->port)
+  	    {
+  	      sendto_ops("Leaf-only link %s issued second server command",
+! 			 get_client_name(sptr, FALSE) );
+  	      sendto_one(cptr, "ERROR :Leaf-only link, sorry." );
+  	      return exit_client(cptr, cptr, cptr, "Leaf Only");
+  	    }
+
+--- 1538,1544 -----
+  	  if (aconf->port == 0 || hop >= aconf->port)
+  	    {
+  	      sendto_ops("Leaf-only link %s issued second server command",
+! 			 get_client_name(cptr, FALSE) );
+  	      sendto_one(cptr, "ERROR :Leaf-only link, sorry." );
+  	      return exit_client(cptr, cptr, cptr, "Leaf Only");
+  	    }
+***************
+*** 3222,3228
+  	 * 3 seconds. -avalon (curtesy of wumpus)
+  	 */
+  	alarm(3);
+! 	if (!(fd = open(MOTD, O_RDONLY)))
+  	    {
+  		alarm(0);
+  		sendto_one(sptr,
+
+--- 3222,3228 -----
+  	 * 3 seconds. -avalon (curtesy of wumpus)
+  	 */
+  	alarm(3);
+! 	if ((fd = open(MOTD, O_RDONLY)) == -1)
+  	    {
+  		alarm(0);
+  		sendto_one(sptr,
+***************
+*** 3233,3239
+  	alarm(0);
+  	sendto_one(sptr, ":%s NOTICE %s :MOTD - %s Message of the Day - ",
+  		me.name, parv[0], me.name);
+! 	while (dgets(fd, line, sizeof(line) - 1))
+  	    {
+  		if (tmp = (char *)index(line,'\n'))
+  			*tmp = '\0';
+
+--- 3233,3239 -----
+  	alarm(0);
+  	sendto_one(sptr, ":%s NOTICE %s :MOTD - %s Message of the Day - ",
+  		me.name, parv[0], me.name);
+! 	while (dgets(fd, line, sizeof(line) - 1) > 0)
+  	    {
+  		if (tmp = (char *)index(line,'\n'))
+  			*tmp = '\0';
+*** include/patchlevel.h.orig	Fri Apr  2 17:35:39 1993
+--- include/patchlevel.h	Fri Apr  2 17:35:45 1993
+***************
+*** 19,25
+  #include "config.h"
+  
+  #ifdef	IDENT
+! #define	PATCHLEVEL	"2.7.2h.ID"
+  #else
+  #define	PATCHLEVEL	"2.7.2h"
+  #endif
+
+--- 19,25 -----
+  #include "config.h"
+  
+  #ifdef	IDENT
+! #define	PATCHLEVEL	"2.7.2i.ID"
+  #else
+  #define	PATCHLEVEL	"2.7.2i"
+  #endif
+***************
+*** 21,25
+  #ifdef	IDENT
+  #define	PATCHLEVEL	"2.7.2h.ID"
+  #else
+! #define	PATCHLEVEL	"2.7.2h"
+  #endif
+
+--- 21,25 -----
+  #ifdef	IDENT
+  #define	PATCHLEVEL	"2.7.2i.ID"
+  #else
+! #define	PATCHLEVEL	"2.7.2i"
+  #endif
+

@@ -1,0 +1,144 @@
+IRCSTAT - Irc Server Statistics.
+
+NEW RELASE - 2.70-200 
+
+New stuff: 
+  Made ircstat running over "identd logfiles".
+  Created a new tool called "newdoms" to extract new domains that are
+  not present in the IDF file. 
+  Created the announce "farnear" tool.
+  Created the "timecount" tool.
+
+Fixed stuff:
+  Yet Another Speedup done my Jan Nicolai Langfeldt.
+  Jan Nicolai Langfeldt made the perl5 port (tho, it will still work with
+  perl4).
+
+
+INTRO
+~~~~~
+IRCSTAT generates practical statistics over domains and users that  
+have connected to the local irc server. One has the option of filtering 
+away any unwanted information.
+
+The program is highly customable using a Ircstat Definition File (idf).
+In the IDF it's possible to have usertranslations, host/domain translations,
+userinformation, dominainformation.
+
+The IRCSTAT program is written in Perl, thus you need perl to run it.
+
+
+Normal use will give you a report like this (example taken from my server):
+
+  STATISTICS FOR IRC SERVER ALF.UIB.NO 9/10 92  10:17:7
+
+  Denne statistikken er laget p} grunnlag av hvor lenge en har v{rt
+  tilkobblet serveren. Dette er en mer korrekt form for statistikk 
+  enn } ta antall tilkoblinger.
+   
+[The introductory text i easy changeable. Sorry for the Norwegian :-)]
+
+
+  Log started: Mon Mar 31 02:03:56 1992 
+  Log ended:   Sun Sep  1 23:00:08 1992 
+
+
+  TOTAL INFORMATION
+  ^^^^^^^^^^^^^^^^
+  Total served time:                  369 ds + 23:11:20
+  Number of sessions:                  9802
+  Number of different domains:           51
+  Number of different users:            962
+  Number of different machines:         410
+
+  Number of "unknown" ident replies:   6868
+  Number of "correct" ident replies:   2873
+  Number of "incorrect" ident replies:   61
+
+
+  DOMAIN INFORMATION
+  ^^^^^^^^^^^^^^^^^^
+                                                               Ident replies
+  Num  Domain name   Users  Logins  Connection time  Percent   Unk  Inc  Cor
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    1  bih.no           53    1731   151 ds + 22:13:17 54.48  1001       730
+    2  unit.no         142    1830    52 ds + 17:16:29 18.90  1800   22    8
+    3  fel.uib.no       25    1132    25 ds + 23:31:37  9.31   900   31  101
+    4  ii.uib.no        67     699    23 ds + 23:29:04  8.60   300    9  690
+[... A lot of host/domains deleted ...]
+
+[... if a domain grouping was due, it may have looked like this ...]
+    1  bih.no           53    1731   151 ds + 22:13:17 54.48  1001       730
+    2  unit.no         142    1830    52 ds + 17:16:29 18.90  1800   22    8
+    3  fel.uib.no (GR)  25    1132    25 ds + 23:31:37  9.31   900   31  101
+	  taxus.uib.no[ 12     950    12 ds + 10:30:37 49.00   455   12   60]
+	    alf.uib.no[ 13     372    13 ds + 13:01:00 51.00   445   19   41]
+    4  ii.uib.no       67      699    23 ds + 23:29:04  8.60   300    9  690
+
+
+  bih.no          - Bergen ingeni|rh|yskole.
+  unit.no         - Universitetet i Trondheim. AVH, NTH og PVV.
+  felles.uib.no   - Fellesresurs EDB senteret, UiB. (alf, taxus)
+  ii.uib.no       - Inst. for informatikk, Uiversitetet i Bergen.
+[... The domain information (taken form the idf file), comes out in the
+     same order as the domains themselves. Sorry about the Norwegian :-)
+     A lot of domains deleted ... ]
+
+
+  INDIVIDUAL USER INFORMATION
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  NOTE 1: ConvServ er en 24 timers IRC service som brukes til } konvertere
+	  mellom forsjellige enheter p} IRC. Dette er IKKE EN bruker, men et
+	  program eller en 'robot'.
+
+[... You may have information on users ...]
+
+  Num  Username                     Logins    Connection time    Unk  Dif  Eqs
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[... usernames have been changed to protect the innocent ...]
+    1  ConvServ@bih.no                 216     79 ds + 22:37:07  219
+    2  someone@bih.no                  355     33 ds + 14:30:44       300   55
+    3  someone@felles.uib.no           886     23 ds + 14:09:13            866
+    4  someone@unit.no                 107     19 ds + 08:59:40  107
+    5  someone@bih.no                  278     14 ds + 10:50:40  278
+
+[... A lot of users deleted ...]
+
+  240  users with less than 60 min. logintime     656    2 ds + 08:53:12
+
+
+
+OTHER PROGRAMS IN THIS PACKAGE
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+logexc   A script to extract from the userlog.
+  If you run  regional stats, this is _THE_ script to use to extract and
+  send LAST months userlog to the person who is doing the regional stat
+  work.
+
+totdays    A script to sum-up days from a userlogfile.
+  IRCNO is using this script to ensure that certain servers do have the 
+  correct amount of klient-served days in a month.
+  It is also better to run this instead of ircstat if you  only wants 
+  totalinformation.
+
+newdoms    A script that extract domains that are not in the IDF file.
+  If you have run ircstat on a 400.000 line logfile and then find out that
+  there are a coupple of new domains it's a pain to re-run the ircstat on
+  those 400.000 lines. Run newdoms prior to ircstat.
+
+farnear    A script to analyze wich domains are using your server.
+  Have you ever wondered about wich domains net-vice that is using your
+  server? This is espesially usefull in a given geographical region.
+
+timecount  A script that will provide you with data on how the server is
+  used dyring the day.
+
+
+EMAIL LIST FOR IRCSTAT
+~~~~~~~~~~~~~~~~~~~~~~
+There exists a ircstat mailinglist. This list is for discussion of the
+ircstat software-suite, bugreporting and such stuff.
+
+Request address: ircstat-requst@vestnett.no
+Listaddress:     ircstat@vestnett.no
+

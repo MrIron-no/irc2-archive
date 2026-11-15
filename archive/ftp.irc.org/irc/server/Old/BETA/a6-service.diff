@@ -1,0 +1,17 @@
+Index: s_service.c
+===================================================================
+RCS file: /usr/local/repository/irc/ircd/s_service.c,v
+retrieving revision 1.50
+retrieving revision 1.51
+diff -u -r1.50 -r1.51
+--- s_service.c	2004/03/18 22:48:01	1.50
++++ s_service.c	2004/03/25 22:07:05	1.51
+@@ -474,7 +474,7 @@
+ 	svc->wants = 0;
+ 	svc->type = type;
+ 	reorder_client_in_list(acptr);
+-	(void)add_to_client_hash_table(acptr->name, sptr);
++	(void)add_to_client_hash_table(acptr->name, acptr);
+ 
+ #ifdef	USE_SERVICES
+ 	check_services_butone(SERVICE_WANT_SERVICE, NULL, acptr,

@@ -1,0 +1,14 @@
+Index: channel.c
+===================================================================
+RCS file: /usr/local/repository/irc/ircd/channel.c,v
+retrieving revision 1.225
+retrieving revision 1.226
+@@ -1752,7 +1752,7 @@
+ 							LDELAYCHASETIMELIMIT;
+ 					}
+ 					/* XXX: fix this in 2.11.1 */
+-					if (MyConnect(sptr) && !IsAnOper(sptr))
++					if (MyClient(sptr) && !IsAnOper(sptr))
+ 					{
+ 						break;
+ 					}

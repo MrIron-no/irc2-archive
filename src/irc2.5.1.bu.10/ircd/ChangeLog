@@ -1,0 +1,108 @@
+Sun Jan  6 06:30:49 1991  Helen Trillian Rose  (hrose at bucsd)
+
+	* s_msg.c
+	  added msa's rehash fix and Hoppie's typo fixes.
+
+	  Added Hoppie's fix for the summon bug.
+
+Mon Nov  5 19:32:09 1990  Tom Hopkins  (hoppie at buengf)
+
+	* s_msg.c
+	  changed m_rehash to make a call to TryConnections and
+	  check_pings immediately after rehash
+
+	  Fixed NOTICE to respect the +n mode on channels  
+
+	* ircd.c
+	  rewrote main loop to make it (hopefully) eat less CPU under bad
+	  conditions and not do too much under good ones.  made check_pings
+	  and TryConnectctions exportable to help keep behavior consistent.
+	  check_pings now returns a nexttime, like TryConnections.
+
+Fri Nov  2 15:43:37 1990  Tom Hopkins  (hoppie at buengf)
+
+	* channel.c
+	  fixed that nagging MODE bug
+
+Wed Oct 31 14:21:04 1990  Tom Hopkins  (hoppie at buengf)
+
+	* s_conf.c
+	  added support for R lines in initconf()
+	  added function find_restrict()
+	* s_msg.c
+	  added support for R lines in m_user, m_rehash
+	* ircd.c
+	  added support for R lines in check_pings()
+
+Sun Oct 21 18:53:02 1990  Christopher Davis  (ckd at bucsd)
+
+	* Makefile
+	  Added IRCDLIBS and IRCDMODE variables
+
+Tue Oct 16 23:25:00 1990  Thomas Hopkins (hoppie@buengf.bu.edu)
+	* s_msg.c
+	  Bug fix
+
+Fri Oct 12 22:30:35 1990  Thomas Hopkins (hoppie@buengf.bu.edu)
+
+	* channel.c
+	  Made error returns for MODE and KICK consistent with others
+	  Fixed KICK to give the right error message at the right time
+	* s_conf.c
+	  Added support for Q lines in initconf()
+	* s_msg.c
+	  added stealth's userlog patch and appropriate headers
+	  made error returns consistent and corrected a little spelling 
+	  added msa's patch to correctly annotate server kills
+	  fixed m_list to make LIST work for specific channels
+	  fixed m_invite to allow invite to other channels
+	  added support for WALLOPS_REMOTES
+	  added support for WALLOPS_QUARANTINE
+	  added the patch for stats c
+
+Wed Jun 20 11:53:00 1990  Jarkko Oikarinen (jto@tolsun.oulu.fi)
+
+	numerous files changed and functions moved around to make
+	string channels work...
+
+Sun Jun 17 16:52:39 1990  Armin Gruner (gruner@informatik.tu-muenchen.de)
+
+      * s_debug.c
+        New created file, common/debug.c has been moved to it because
+        now we handle also debug outputs in client code
+
+      * s_conf.c
+        Added the prefix character into all reply-strings.
+        MSGs never appeared on client site because parse() didn't
+        recognize it as a prefix (numeric) message
+        Changed the test of time-interval, now a specified interval
+        that begins before midnight and ends after should also work
+
+      * s_bsd.c
+        Added setdtablesize() for sequents OS Dynix,
+        default was 20; allows more socket connections.
+
+Sat May 12 22:50:13 1990  Jarkko Oikarinen (jto@tolsun.oulu.fi)
+
+	* s_msg.c
+	  Added newline removal from the end of string ctime()
+	  returns (m_info() and m_stats())
+	* s_whowas.c
+	  Added newline removal from the end of string ctime()
+	  returns (m_whowas())
+	* s_conf.f
+	  Added close() into init_conf()
+	  Was obviously forgotten from there
+
+Thu May 10 17:17:13 1990  Jarkko Oikarinen (jto@tolsun.oulu.fi)
+
+        * whowas.c
+          Fixed memcpy and bcopy problems
+ 
+Sat Jan  6 17:36:28 1990  Mike Bolotski  (mikeb at coho.ee.ubc.ca)
+
+	* date.c
+
+	Added HPUX-specific code since it lacks the timezone() function.
+
+
