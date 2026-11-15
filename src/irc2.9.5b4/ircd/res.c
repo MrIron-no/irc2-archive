@@ -23,6 +23,10 @@
 #include "s_externs.h"
 #undef RES_C
 
+// Add these function prototypes
+u_int16_t ircd_getshort(const u_char *msgp);
+u_int32_t ircd_getlong(const u_char *msgp);
+
 #ifndef lint
 static  char rcsid[] = "@(#)$Id: res.c,v 1.12 1997/10/13 17:37:11 kalt Exp $";
 #endif

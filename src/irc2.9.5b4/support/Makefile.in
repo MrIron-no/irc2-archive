@@ -27,13 +27,15 @@ prefix = @prefix@
 exec_prefix = @exec_prefix@
 
 CC = @CC@
-S_CFLAGS = @CFLAGS@ -I. -I../ircd -I../common @IRC_ZLIB_INCLUDE@
+#S_CFLAGS = @CFLAGS@ -I. -I../ircd -I../common @IRC_ZLIB_INCLUDE@
+S_CFLAGS = @CFLAGS@ -I. -I../ircd -I../common
 CC_CFLAGS = @CFLAGS@ -I. -I../ircd -I../common
 C_CFLAGS = @CFLAGS@ -I. -I../irc -I../common
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 MATHLIBS = -lm
-ZLIBS = @IRC_ZLIB_LIBRARY@
+#ZLIBS = @IRC_ZLIB_LIBRARY@
+ZLIBS = 
 CURSESLIBS = @IRC_CURSES_TERMCAP_LIBRARY@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -99,7 +101,7 @@ $(CLIENT): $(CLIENT_COMMON_OBJS) $(CLIENT_OBJS)
 
 $(SERVER): $(SERVER_COMMON_OBJS) $(SERVER_OBJS)
 	$(RM) $@
-	./version.c.SH
+	sh ./version.c.SH
 	$(CC) $(S_CFLAGS) -c -o version.o version.c
 	$(CC) $(LDFLAGS) -o $@ $(SERVER_COMMON_OBJS) version.o $(SERVER_OBJS) $(ZLIBS) $(MATHLIBS) $(LIBS)
 

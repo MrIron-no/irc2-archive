@@ -25,6 +25,7 @@
 static  char rcsid[] = "@(#)$Id: s_misc.c,v 1.15 1998/01/07 19:13:29 kalt Exp $";
 #endif
 
+#include <time.h>
 #include "os.h"
 #include "s_defines.h"
 #define S_MISC_C

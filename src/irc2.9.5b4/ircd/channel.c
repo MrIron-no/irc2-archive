@@ -1784,7 +1784,7 @@ char	*parv[];
 			    {
 				sendto_one(sptr, err_str(ERR_NOSUCHCHANNEL,
 							 parv[0]), parv[1]);
-				return;
+				return 0;
 			    }
 		    }
 		/* add user to channel */

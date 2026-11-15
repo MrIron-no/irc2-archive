@@ -51,6 +51,7 @@
 static  char rcsid[] = "@(#)$Id: s_conf.c,v 1.26 1998/01/27 13:03:18 kalt Exp $";
 #endif
 
+#include <time.h>
 #include "os.h"
 #include "s_defines.h"
 #define S_CONF_C
