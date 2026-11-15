@@ -37,6 +37,7 @@ char irc_id[]="irc.c v2.0 (c) 1988 University of Oulu, Computing Center and Jark
                     /* this is to prevent looping with /unkill */
 #include "struct.h"
 #include <sys/types.h>
+#include <time.h>
 #if VMS
 #include stdlib
 #if MAIL50
@@ -70,13 +71,17 @@ char *a_myuser();
 #endif
 #include <signal.h>
 
+#include <unistd.h>
+#include <sys/socket.h>
+
 #include "common.h"
 #include "msg.h"
 #include "sys.h"
 #include "irc.h"
+#include "global.h"
 
 extern char *HEADER;
-int timeout();
+//int timeout();
 char buf[BUFSIZE];
 aChannel *channel = (aChannel *) 0;
 static char currserver[HOSTLEN + 1];
@@ -93,6 +98,22 @@ static int apu = 0;  /* Line number we're currently on screen */
 static int sock;     /* Server socket fd */
 int QuitFlag = 0;
 static int KillCount = 0;
+
+/* Forward declarations */
+//int timeout(void);
+int client_init(const char *server, int port);
+int client_loop(int);
+int initconf(const char *, const char *, const char *, aChannel **);
+int myloop(int);
+int intr(void);
+int do_clear(char *, char *);
+int do_log(char *, char *);
+int do_channel(char *, char *);
+
+/* System function declarations */
+extern __uid_t getuid(void);
+extern int setuid(uid_t);
+extern int close(int);
 
 #if HPUX
 char logbuf[BUFSIZ]; 
@@ -131,7 +152,7 @@ struct itmlst
 #endif
 #endif
 
-main(argc, argv)
+int main(argc, argv)
      int argc;
      char *argv[];
 {
@@ -139,9 +160,7 @@ main(argc, argv)
   int length;
   struct passwd *userdata;
   char *cp, *argv0=argv[0], *nickptr, *servptr, *getenv(), ch;
-#if !VMS
-  extern int exit();
-#endif
+
   static char usage[] =
     "Usage: %s [ -c channel ] [ -p port ] [ nickname [ server ] ]\n";
   if ((cp = rindex(argv0, '/')) != NULL)
@@ -323,7 +342,7 @@ main(argc, argv)
 /*  signal(SIGTSTP, SIG_IGN); */
     myloop(sock);
     if (logfile != (FILE *) 0)
-      do_log(NULL);
+      do_log(NULL, NULL);
 #ifdef DOCURSES
     if (termtype == CURSES_TERM) {
       echo();
@@ -341,10 +360,10 @@ main(argc, argv)
   exit(0);
 }
 
-intr()
+int intr()
 {
   if (logfile != (FILE *) 0) {
-    do_log(NULL);
+    do_log(NULL, NULL);
   }
 #ifdef DOCURSES
   if (termtype == CURSES_TERM) {
@@ -361,7 +380,7 @@ intr()
   exit(0);
 }
 
-myloop(sock)
+int myloop(sock)
 int sock;
 {
 #ifdef DOCURSES
@@ -597,7 +616,7 @@ char *str1, *str2;
   else return s1;
 }
 
-do_clear(buf, temp)
+int do_clear(buf, temp)
 char *buf, *temp;
 {
 #ifdef DOCURSES
@@ -618,8 +637,7 @@ char *buf, *temp;
 #endif
 }
 
-putline(line)
-char *line;
+void putline(const char *line)
 {
   char *ptr, *ptr2;
 #ifdef DOCURSES
@@ -633,11 +651,11 @@ char *line;
    ** codes from the messages (this sets them as "_").
    */
   if (line)
-    for (ptr = line; *ptr; ptr++)
+    for (ptr = (char *)line; *ptr; ptr++)
       if ((*ptr < 32 && *ptr != 7 && *ptr != 9) || (*ptr > 126))
 	*ptr = '_'; 
 
-  ptr = line;
+  ptr = (char *)line;
   
 #ifdef DOCURSES
   if (termtype == CURSES_TERM) {
@@ -753,7 +771,7 @@ make_client()
 }
 
 
-do_log(ptr, temp)
+int do_log(ptr, temp)
 char *ptr, *temp;
 {
   long tloc;
@@ -855,13 +873,13 @@ char *ptr, *xtra;
 /* Fake routine (it's only in server...) */
 int IsMember() { return 0; }
 
-do_channel(ptr, xtra)
+int do_channel(ptr, xtra)
 char *ptr, *xtra;
 {
     if (BadPtr(ptr))
 	{
 	putline("*** Which channel do you want to join?");
-	return;
+	return 0;
 	}
 
     if (querychannel)

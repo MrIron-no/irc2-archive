@@ -20,6 +20,7 @@
 
 char help_id[]="help.c v2.0 (c) 1988 University of Oulu, Computing Center and Jarkko Oikarinen";
 
+#include <stdio.h>
 #include "struct.h"
 #include "common.h"
 #include "sys.h"
@@ -27,7 +28,10 @@ char help_id[]="help.c v2.0 (c) 1988 University of Oulu, Computing Center and Ja
 
 char helpbuf[80];
 
-do_help(ptr, temp)
+void putline(const char *msg);
+int mycncmp(const char *s1, const char *s2);
+
+int do_help(ptr, temp)
 char *ptr, *temp;
 {
   struct Help *hptr;

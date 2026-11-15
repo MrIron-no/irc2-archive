@@ -29,6 +29,9 @@
  *
  */
 
+#ifndef CLASS_H
+#define CLASS_H
+
 #ifndef PROTO
 #if __STDC__
 #       define PROTO(x) x
@@ -72,3 +75,5 @@ extern int GetConFreq PROTO((aClass *));
 extern void AddClass PROTO((int, int, int, int));
 extern void check_class PROTO((void));
 extern void initclass PROTO((void));
+
+#endif /* CLASS_H */

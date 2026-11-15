@@ -57,7 +57,10 @@ char list_id[] = "list.c v2.0 (c) 1988 University of Oulu, Computing Center and 
 extern aClient *client;
 extern aConfItem *conf;
 
-static outofmemory()
+void debug(int, const char *, ...); // Add this prototype
+void OffHistory(aClient *);    
+
+static int outofmemory()
     {
 	debug(DEBUG_FATAL, "Out of memory: restarting server...");
 	restart();
@@ -104,7 +107,7 @@ aClient *from;
 ** 'make_user' add's an User information block to a client
 ** if it was not previously allocated.
 */
-make_user(sptr)
+int make_user(sptr)
 aClient *sptr;
     {
 	if (sptr->user != NULL)
@@ -124,7 +127,7 @@ aClient *sptr;
 **	Decrease user reference count by one and realease block,
 **	if count reaches 0
 */
-free_user(user)
+int free_user(user)
 anUser *user;
     {
 	if (--user->refcnt == 0)
@@ -139,7 +142,7 @@ anUser *user;
  * taken the code from ExitOneClient() for this and placed it here.
  * - avalon
  */
-remove_client_from_list(cptr)
+int remove_client_from_list(cptr)
 aClient	*cptr;
 {
 	if (cptr->prev)
@@ -161,7 +164,7 @@ aClient	*cptr;
  * in this file, shouldnt they ?  after all, this is list.c, isnt it ?
  * -avalon
  */
-add_client_to_list(cptr)
+int add_client_to_list(cptr)
 aClient	*cptr;
 {
 	cptr->next = client;

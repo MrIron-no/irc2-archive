@@ -33,12 +33,11 @@
 char bsd_id[] = "bsd.c v2.0 (c) 1988 University of Oulu, Computing Center and Jarkko Oikarinen";
 
 #include <signal.h>
-#include <sys/errno.h>
+#include <errno.h>
+#include <unistd.h>  /* for alarm() and write() */
 #include "config.h"
 #include "common.h"
 #include "sys.h"
-
-extern int errno; /* ...seems that errno.h doesn't define this everywhere */
 
 VOIDSIG dummy()
     {

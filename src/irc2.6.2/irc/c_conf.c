@@ -25,9 +25,11 @@ char conf_id[] = "conf.c v2.0 (c) 1988 University of Oulu, Computing Center and 
 #include "common.h"
 #include "sys.h"
 
+void debug(int level, char *pattern, ...); // Add this line
+
 extern char *getfield();
 
-initconf(host, passwd, myname, port)
+int initconf(host, passwd, myname, port)
 char *host, *passwd, *myname;
 int *port;
 {

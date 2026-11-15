@@ -22,6 +22,7 @@ char edit_id[] = "edit.c v2.0 (c) 1988 University of Oulu, Computing Center and 
 
 #include <curses.h>
 #include <signal.h>
+#include <unistd.h>
 #include "struct.h"
 #include "common.h"
 
@@ -33,8 +34,57 @@ extern int termtype;
 static int esc=0;
 static int literal=0;
 
-do_char(ch, sock)
-char ch;
+int toggle_ins(void);
+int do_after_esc(char ch);
+int tulosta_viimeinen_rivi(void);
+int bol(void);
+int back_ch(void);
+int rev_line(void);
+int del_ch_right(void);
+int eol(void);
+int forw_ch(void);
+int add_ch(int ch);
+int del_ch_left(void);
+int send_this_line(int sock);
+int kill_eol(void);
+int refresh_screen(void);
+int next_in_history(void);
+int previous_in_history(void);
+int kill_whole_line(void);
+int literal_next(void);
+int del_word_left(void);
+int yank(void);
+int suspend_irc(void);
+int got_esc(void);
+int set_position(int pos, int whence);
+int get_position(void);
+int get_char(int pos);
+int set_char(int pos, int ch);
+int word_back(void);
+int del_word_right(void);
+int word_forw(void);
+int in_insert_mode(void);
+int tstp(void);
+
+static void tstp_handler(int sig)
+{
+    signal(SIGTSTP, SIG_DFL);
+    kill(getpid(), SIGTSTP);
+    signal(SIGTSTP, tstp_handler);
+}
+
+int tstp()
+{
+#ifdef SIGTSTP
+    signal(SIGTSTP, tstp_handler);
+    kill(getpid(), SIGTSTP);
+    return 0;
+#else
+    return -1;
+#endif
+}
+
+int do_char(char ch, int sock)
 {
     static int first_time=0;
 
@@ -137,28 +187,28 @@ char ch;
     return tulosta_viimeinen_rivi();
 }
 
-bol()
+int bol()
 {
     set_position(0, FROM_START);
 }
 
-eol()
+int eol()
 {
     set_position(0, FROM_END);
     set_position(1, RELATIVE);
 }
 
-back_ch()
+int back_ch()
 {
     set_position(-1, RELATIVE);
 }
 
-forw_ch()
+int forw_ch()
 {
     set_position(1, RELATIVE);
 }
 
-rev_line()
+int rev_line()
 {
     int i1, i2, i3, i4;
     
@@ -176,7 +226,7 @@ rev_line()
     }
 }
 
-del_ch_right()
+int del_ch_right()
 {
     int i1, i2, i3;
 
@@ -193,7 +243,7 @@ del_ch_right()
     return 0;
 }
 
-del_ch_left()
+int del_ch_left()
 {
     int i1, i2, i3;
 
@@ -211,56 +261,57 @@ del_ch_left()
     return 0;
 }
 
-suspend_irc()
+int suspend_irc()
 {
 #if HPUX || defined(mips) || AIX
 #ifdef SIGSTOP
-  kill(getpid(), SIGSTOP);
+    kill(getpid(), SIGSTOP);
 #endif
 #else
 #if !VMS
-  tstp(); 
+    tstp();
 #endif
 #endif
+    return 0;
 }
 
-got_esc()
+int got_esc()
 {
     esc = 1;
 }
 
-do_after_esc(ch)
+int do_after_esc(ch)
 char ch;
 {
     if (literal) {
-	literal=0;
-	add_ch(ch);
-	return 0;
+    literal=0;
+    add_ch(ch);
+    return 0;
     }
     esc = 0;
     switch (ch) {
     case 'b':
-	word_back();
-	break;
+    word_back();
+    break;
     case 'd':
-	del_word_right();
-	break;
+    del_word_right();
+    break;
     case 'f':
-	word_forw();
-	break;
+    word_forw();
+    break;
     case 'y':
-	yank();
-	break;
+    yank();
+    break;
     case '\177':
-	del_word_left();
-	break;
+    del_word_left();
+    break;
     default:
-	break;
+    break;
     }
     return 0;
 }
 
-refresh_screen()
+int refresh_screen()
 {
 #ifdef DOCURSES
   if (termtype == CURSES_TERM) {
@@ -270,88 +321,88 @@ refresh_screen()
 #endif
 }
 
-add_ch(ch)
+int add_ch(ch)
 int ch;
 {
     int i1, i2, i3;
     if (in_insert_mode()) {
-	i1=get_position();
-	set_position(0, FROM_END);
-	i2=get_position();
-	for (i3=i2; i3>=0; i3--)
-	    set_char(i1+i3+1, get_char(i3+i1));
-	set_char(i1, ch);
-	set_position(i1, FROM_START);
-	set_position(1, RELATIVE);
+    i1=get_position();
+    set_position(0, FROM_END);
+    i2=get_position();
+    for (i3=i2; i3>=0; i3--)
+        set_char(i1+i3+1, get_char(i3+i1));
+    set_char(i1, ch);
+    set_position(i1, FROM_START);
+    set_position(1, RELATIVE);
     } else {
-	i1=get_position();
-	set_char(i1, ch);
-	set_position(i1, FROM_START);
-	set_position(1, RELATIVE);
+    i1=get_position();
+    set_char(i1, ch);
+    set_position(i1, FROM_START);
+    set_position(1, RELATIVE);
     }
 }
 
-literal_next()
+int literal_next()
 {
     got_esc();
     literal=1;
 }
 
-word_forw()
+int word_forw()
 {
     int i1,i2;
 
     i1=get_position();
     while( i2=get_char(i1) )
-	if ((i2==(int)' ') ||
-	    (i2==(int)'\t') ||
-	    (i2==(int)'_') ||
-	    (i2==(int)'-'))
-	    i1++;
-	else
-	    break;
+    if ((i2==(int)' ') ||
+        (i2==(int)'\t') ||
+        (i2==(int)'_') ||
+        (i2==(int)'-'))
+        i1++;
+    else
+        break;
     while( i2=get_char(i1) )
-	if ((i2==(int)' ') ||
-	    (i2==(int)'\t') ||
-	    (i2==(int)'_') ||
-	    (i2==(int)'-'))
-	    break;
-	else
-	    i1++;
+    if ((i2==(int)' ') ||
+        (i2==(int)'\t') ||
+        (i2==(int)'_') ||
+        (i2==(int)'-'))
+        break;
+    else
+        i1++;
     set_position(i1, FROM_START);
 }
 
-word_back()
+int word_back()
 {
     int  i1,i2;
 
     i1=get_position();
     if (i1!=0)
-	i1--;
+    i1--;
     while( i2=get_char(i1) )
-	if ((i2==(int)' ') ||
-	    (i2==(int)'\t') ||
-	    (i2==(int)'_') ||
-	    (i2==(int)'-'))
-	    i1--;
-	else
-	    break;
-    while( i2=get_char(i1) )
-	if ((i2==(int)' ') ||
-	    (i2==(int)'\t') ||
-	    (i2==(int)'_') ||
-	    (i2==(int)'-'))
-	    break;
-	else
-	    i1--;
-    if (i1<=0)
-	i1=0;
+    if ((i2==(int)' ') ||
+        (i2==(int)'\t') ||
+        (i2==(int)'_') ||
+        (i2==(int)'-'))
+        i1--;
     else
-	i1++;
+        break;
+    while( i2=get_char(i1) )
+    if ((i2==(int)' ') ||
+        (i2==(int)'\t') ||
+        (i2==(int)'_') ||
+        (i2==(int)'-'))
+        break;
+    else
+        i1--;
+    if (i1<=0)
+    i1=0;
+    else
+    i1++;
     set_position(i1, FROM_START);
 }
 
-del_word_left()
+int del_word_left()
 {
     int i1, i2, i3, i4;
 
@@ -361,13 +412,13 @@ del_word_left()
     set_position(0, FROM_END);
     i3=get_position();
     for(i4=i2; i4<=i3-(i1-i2); i4++)
-	set_char(i4, get_char(i4+(i1-i2)));
+    set_char(i4, get_char(i4+(i1-i2)));
     for(; i4<=i3; i4++)
-	set_char(i4, (int)'\0');
+    set_char(i4, (int)'\0');
     set_position(i2, FROM_START);
 }
 
-del_word_right()
+int del_word_right()
 {
     int i1, i2, i3, i4;
 
@@ -377,9 +428,9 @@ del_word_right()
     set_position(0, FROM_END);
     i3=get_position();
     for(i4=i2; i4<=i3-(i1-i2); i4++)
-	set_char(i4, get_char(i4+(i1-i2)));
+    set_char(i4, get_char(i4+(i1-i2)));
     for(; i4<=i3; i4++)
-	set_char(i4, (int)'\0');
+    set_char(i4, (int)'\0');
     set_position(i2, FROM_START);
 }
 

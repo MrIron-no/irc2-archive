@@ -19,15 +19,20 @@
 
 char ignore_id[]="ignore.c v2.0 (c) 1988, 1989 Jarkko Oikarinen";
 
+#include <stdio.h>
 #include "struct.h"
 #include "common.h"
 #include "sys.h"
+#include "global.h"
 
 anIgnore *ignore = (anIgnore *) 0;
 char ibuf[80];
 extern anIgnore *find_ignore();
 
-do_ignore(user, temp)
+int kill_ignore(anIgnore *iptr);
+int add_ignore(char *ch, int status);
+
+int do_ignore(user, temp)
 char *user, *temp;
 {
   char *ch;

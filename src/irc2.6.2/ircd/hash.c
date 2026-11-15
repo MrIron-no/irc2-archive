@@ -18,21 +18,29 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>  /* for free() and atoi() */
 #include "config.h"
 #include "struct.h"
 #include "sys.h"
 #include "hash.h"
 #include <ctype.h>
 
-extern	aClient	*client;
-extern	aChannel	*channel;
+/* Forward declarations */
+static int addHashTableLink(char *name, void *cptr, aHashEntry table[], int hashv);
+static int delHashTableLink(char *name, void *cptr, aHashEntry table[], int hashv);
+int mycmp(const char *str1, const char *str2);
+void sendto_one(aClient *to, const char *pattern, ...);
+void *MyMalloc(size_t size);
 
-aClient	*hash_find_client();
+extern aClient *client;
+extern aChannel *channel;
 
-static	aHashEntry	clientTable[HASHSIZE];
-static	aHashEntry	channelTable[CHANNELHASHSIZE];
+aClient *hash_find_client();
 
-static	int	hash_mult[] = { 127, 131, 107, 151, 179,
+static aHashEntry clientTable[HASHSIZE];
+static aHashEntry channelTable[CHANNELHASHSIZE];
+
+static int hash_mult[] = { 127, 131, 107, 151, 179,
 				141, 167, 119, 123, 103, 105};
 /*
  * this function must be *quick*.  Thus there should be no multiplication
@@ -147,7 +155,7 @@ aChannel	*chptr;
 
 static	int	delHashTableLink(name, cptr, table, hashv)
 char	*name;
-aClient	*cptr;
+void	*cptr;
 aHashEntry	table[];
 int	hashv;
 {
@@ -307,7 +315,7 @@ c_move_to_top:
  *       -avalon
  */
 
-m_hash(cptr, sptr, parc, parv)
+int m_hash(cptr, sptr, parc, parv)
 aClient	*cptr, *sptr;
 int	parc;
 char	*parv[];
@@ -321,7 +329,7 @@ char	*parv[];
 	aHashEntry	*table;
 
 	if (!IsRegisteredUser(sptr) || !MyConnect(sptr))
-		return;
+		return 0;
 	if (parc > 1) {
 		ch = *parv[1];
 		if (islower(ch))

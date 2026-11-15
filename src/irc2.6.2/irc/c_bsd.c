@@ -20,6 +20,9 @@
 
 char c_bsd_id[] = "c_bsd.c v2.0 (c) 1988 University of Oulu, Computing Center and Jarkko Oikarinen";
 
+#include <unistd.h>
+#include <string.h>
+#include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/file.h>
@@ -52,6 +55,10 @@ char c_bsd_id[] = "c_bsd.c v2.0 (c) 1988 University of Oulu, Computing Center an
 extern aClient me;
 extern int termtype;
 extern int QuitFlag;
+
+int dopacket(aClient *cptr, char *buf, int len);
+void putline(const char *msg);
+int do_char(char c);
 
 int
 client_init(host, portnum)
@@ -119,7 +126,7 @@ int portnum;
 }
 /* End Fix */
 
-client_loop(sock)
+int client_loop(sock)
 int sock;
 {
   int i = 0, size, pos;
@@ -128,7 +135,9 @@ int sock;
   do {
     if (sock < 0 || QuitFlag)
       return(-1);
-    ready.fds_bits[0] = (1 << sock) | 1;
+    FD_ZERO(&ready);
+    FD_SET(sock, &ready);
+    FD_SET(0, &ready); // 0 is stdin
 #ifdef DOCURSES
     if (termtype == CURSES_TERM) {
       move(LINES-1,i); refresh();
@@ -142,7 +151,7 @@ int sock;
 /*      perror("select"); */
       continue;
     }
-    if (ready.fds_bits[0] & (1 << sock)) {
+    if (FD_ISSET(sock, &ready)) {
       if ((size = read(sock, apubuf, STDINBUFSIZE)) < 0)
 	perror("receiving stream packet");
       if (size <= 0) {
@@ -152,7 +161,7 @@ int sock;
       dopacket(&me, apubuf, size);
     }
 #ifndef AUTOMATON
-    if (ready.fds_bits[0] & 1) {
+    if (FD_ISSET(0, &ready)) {
       if ((size = read(0, apubuf, STDINBUFSIZE)) < 0) {
 	putline("FATAL ERROR: End of stdin file !");
 	return -1;

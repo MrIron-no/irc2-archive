@@ -48,21 +48,23 @@
 
 char s_bsd_id[] = "s_bsd.c v2.0 (c) 1988 University of Oulu, Computing Center and Jarkko Oikarinen";
 
+#include <unistd.h>
+
+#include <string.h>
 #include "struct.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
-#if !HPUX
 #include <arpa/inet.h>
-#endif
 #include <netdb.h>
 #include <stdio.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <utmp.h>
 #include <sys/errno.h>
+#include <stdlib.h>
 #include "common.h"
 #include "sys.h"
 #include "numeric.h"
@@ -88,6 +90,17 @@ extern int debugtty;
 extern long nextconnect;
 
 extern int errno;
+
+extern char *irc_strerror(int err_no);
+
+void debug(int, const char *, ...);
+void sendto_ops(const char *, ...);
+void sendto_one(aClient *, const char *, ...);
+int getmyname(char *, int);
+void detach_conf(aClient *, void *);
+void add_client_to_list(aClient *);
+void ExitClient(aClient *, aClient *, aClient *, const char *);
+void SendQueued(aClient *);
 
 aClient	*local[MAXCONNECTIONS];
 int	highest_fd = 0;
@@ -154,10 +167,9 @@ aClient *cptr;
     {
 	Reg1 int errtmp = errno; /* debug may change 'errno' */
 	Reg2 char *host = cptr == NULL ? "" : GetClientName(cptr,FALSE);
-	extern char *strerror();
 
-	debug(DEBUG_ERROR,text,host,strerror(errtmp));
-	sendto_ops(text,host,strerror(errtmp));
+	debug(DEBUG_ERROR,text,host,irc_strerror(errtmp));
+	sendto_ops(text,host,irc_strerror(errtmp));
 	return 0;
     }
 
@@ -205,7 +217,7 @@ int portnum;
 	{ /* KLUDGE to get it work... */
 	  char buf[1024];
 	  int len = sizeof(server);
-	  if (getsockname(sock, &server, &len)) {
+	  if (getsockname(sock, (struct sockaddr *)&server, &len)) {
 	    exit(1);
 	  }
 	  sprintf(buf, ":%s %d %d :Port to local server is\n",
@@ -218,7 +230,7 @@ int portnum;
 	return(sock);
     }
 
-init_sys()
+int init_sys()
     {
 	int fd;
 #ifdef sequent
@@ -408,7 +420,7 @@ aClient *cptr;
 **	Close the physical connection. This function must make
 **	MyConnect(cptr) == FALSE, and set cptr->from == NULL.
 */
-CloseConnection(cptr)
+int CloseConnection(cptr)
 aClient *cptr;
     {
         Reg1 aConfItem *aconf;
@@ -464,7 +476,7 @@ aClient *cptr;
 **	blocking version of IRC--not a problem if you are a
 **	lightly loaded node...)
 */
-static SetNonBlocking(cptr)
+static int SetNonBlocking(cptr)
 aClient *cptr;
     {
 	int res;
@@ -499,7 +511,7 @@ int fd;
   return cptr;
 }
 
-ReadMessage(buffer, buflen, from, delay)
+int ReadMessage(buffer, buflen, from, delay)
      char *buffer;
      int buflen;
      aClient **from;
@@ -682,7 +694,7 @@ ReadMessage(buffer, buflen, from, delay)
 }    
 
 
-connect_server(aconf)
+int connect_server(aconf)
 aConfItem *aconf;
     {
 	struct sockaddr_in server;
@@ -788,7 +800,7 @@ int fd;
 	return(close(fd));
     }
 
-summon(who, namebuf, linebuf)
+int summon(who, namebuf, linebuf)
 aClient *who;
 char *namebuf, *linebuf;
     {
@@ -874,7 +886,7 @@ char *namebuf, *linebuf;
 	return 0;
     }
 
-getmyname(name, len)
+int getmyname(name, len)
 char *name;
 int len;
 {

@@ -31,9 +31,10 @@
 
 #include "struct.h"
 #include "common.h"
+#include "global.h"
+#include <errno.h>
 
-extern char *strerror();
-extern int errno;
+extern char *irc_strerror(int err_no);
 
 #define BAD_CONF_CLASS		-1
 #define BAD_PING		-2
@@ -139,7 +140,7 @@ int class, ping, confreq, maxli;
   if ((t == classes) && (class != 0)) {
     p = (aClass *) malloc(sizeof(aClass));
     if (!p) {
-      debug(DEBUG_FATAL, "malloc (addclass) %s", strerror(errno));
+      debug(DEBUG_FATAL, "malloc (addclass) %s", irc_strerror(errno));
       restart();
     }
     NextClass(p) = NextClass(t);
@@ -192,7 +193,7 @@ void initclass()
   classes = (aClass *) malloc(sizeof(aClass));
 
   if (!FirstClass()) {
-    debug(DEBUG_FATAL, "malloc (initclass) %s", strerror(errno));
+    debug(DEBUG_FATAL, "malloc (initclass) %s", irc_strerror(errno));
     restart();
   }
   Class(FirstClass()) = 0;

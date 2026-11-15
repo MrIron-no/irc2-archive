@@ -30,6 +30,11 @@
  *
  */
 
+#ifndef STRUCT_H
+#define STRUCT_H
+
+#include <string.h>
+#include <stddef.h>
 #include "config.h"
 
 typedef struct ConfItem aConfItem;
@@ -88,10 +93,6 @@ typedef struct User anUser;
 ** it has worked on all machines I have needed it. The type
 ** should be size_t but...  --msa
 */
-#ifndef offsetof
-#define offsetof(t,m) (int)((&((t *)0L)->m))
-#endif
-
 #define elementsof(x) (sizeof(x)/sizeof(x[0]))
 
 #define IsLocOp(x)      (((x)->status) & (STAT_LOCOP) && ((x)->status > 0))
@@ -329,3 +330,5 @@ extern struct Client *make_client();
 #define MyConnect(x) ((x)->fd >= 0)
 #define IsMagicLink(x) ((x)->fd == -20)
 #define SetMagicLink(x) ((x)->fd = -20)
+
+#endif /* STRUCT_H */

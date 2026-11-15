@@ -20,6 +20,9 @@
 CC=cc 
 RM=/bin/rm
 INCLUDEDIR=../include
+INSTALL=/usr/bin/install
+BINDIR=/usr/local/bin
+IRCDDIR=/usr/local/ircd
 
 # use the following on MIPS:
 # CFLAGS=-systype bsd43 -I$(INCLUDEDIR)
@@ -75,7 +78,18 @@ depend:
 	done
 
 install:
-	echo "Installing...";
+	@echo "Installing IRC binaries..."
+	@if [ ! -d $(BINDIR) ]; then \
+		mkdir -p $(BINDIR); \
+	fi
+	@if [ ! -d $(IRCDDIR) ]; then \
+		mkdir -p $(IRCDDIR); \
+	fi
+	$(INSTALL) -m 755 ircd/ircd $(IRCDDIR)
+	$(INSTALL) -m 755 irc/irc $(BINDIR)
+	@echo "Installation complete. Binaries are in:"
+	@echo "  Server: $(IRCDDIR)/ircd"
+	@echo "  Client: $(BINDIR)/irc"
 
 rcs:
 	cii -H -R Makefile common include irc ircd

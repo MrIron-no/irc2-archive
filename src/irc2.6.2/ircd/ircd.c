@@ -34,12 +34,47 @@ char ircd_id[] = "ircd.c v2.0 (c) 1988 University of Oulu, Computing Center and 
 
 #include <sys/types.h>
 #include <sys/file.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <signal.h>
 #include "struct.h"
 #include "common.h"
 #include "sys.h"
 #include "numeric.h"
+#include <unistd.h>     // for close, dup2, execv, setuid, setgid, getuid, geteuid, umask
+#include <fcntl.h>      // for open
+#include <sys/socket.h> // for shutdown
+#include <stdlib.h>     // for exit, atoi
+#include <string.h>     // for strncpy
+#include <time.h>       // for time
+#include "class.h"
+
+// Prototypes for functions defined elsewhere
+void sendto_ops(const char *, ...);
+void debug(int, const char *, ...);
+int connect_server(aConfItem *);
+void ExitClient(aClient *, aClient *, aClient *, const char *);
+void sendto_one(aClient *, const char *, ...);
+int ReadMessage(char *, int, aClient **, long);
+int dopacket(aClient *, char *, int);
+void rehash(void);
+void clearClientHashTable(void);
+void clearChannelHashTable(void);
+void initclass(void);
+int initconf(void);
+void init_sys(void);
+int open_port(int);
+void addToClientHashTable(char *, aClient *);
+void save_messages(void);
+void check_class(void);
+int getmyname(char *, int);
+char *myctime(long);
+int GetConFreq(aClass *);
+int GetClientPing(aClient *);
+int find_kill(const char *, const char *, char *);
+#ifdef R_LINES
+int find_restrict(const char *, const char *, char *);
+#endif
 
 aClient me;			/* That's me */
 aClient *client = &me;		/* Pointer to beginning of Client list */
@@ -300,7 +335,9 @@ static int BadCommand()
   return -1;
 }
 
-main(argc, argv)
+static int OpenLog();
+
+int main(argc, argv)
 int argc;
 char *argv[];
 {
@@ -309,7 +346,6 @@ char *argv[];
 	int length;		/* Length of message received from client */
 	char buffer[BUFSIZE];
 	long delay, now;
-	static int OpenLog();
 
 	myargv = argv; umask(077); /* better safe than sorry --SRB */
 	signal(SIGPIPE, SIG_IGN);

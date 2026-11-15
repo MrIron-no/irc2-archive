@@ -44,7 +44,7 @@ char debug_id[] = "debug.c v2.0 (c) 1988 University of Oulu, Computing Center an
 extern int debuglevel;
 
 #ifndef debug
-debug(level, form, para1, para2, para3, para4, para5, para6)
+void debug(level, form, para1, para2, para3, para4, para5, para6)
 int level;
 char *form, *para1, *para2, *para3, *para4, *para5, *para6;
 {

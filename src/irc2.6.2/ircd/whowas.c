@@ -85,7 +85,7 @@ static int HistoryLength = 0;
 */
 static int MaxHistoryLength = NICKNAMEHISTORYLENGTH;
 
-AddHistory(cptr)
+int AddHistory(cptr)
 aClient *cptr;
     {
 	Reg1 aName *new;
@@ -154,7 +154,7 @@ aClient *cptr;
 ** OffHistory
 **	This is called when client signs off the system.
 */
-OffHistory(cptr)
+int OffHistory(cptr)
 aClient *cptr;
     {
 	AddHistory(cptr);

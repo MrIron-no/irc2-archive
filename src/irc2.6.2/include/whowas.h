@@ -29,6 +29,8 @@
  *
  */
 
+#include "global.h"
+
 #ifndef PROTO
 #if __STDC__
 #	define PROTO(x)	x

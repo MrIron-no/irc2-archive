@@ -32,6 +32,10 @@
 
 char date_id[]="date.c v2.0 (c) 1988 University of Oulu, Computing Center and Jarkko Oikarinen";
 
+#include <time.h>
+#include <stdio.h>
+#include <string.h>
+
 #include "config.h"
 #include "common.h"
 #include "sys.h"
@@ -56,21 +60,14 @@ long clock;
   struct timeval tp;
   struct timezone tzp;
   char *timezonename;
-#if !(HPUX || AIX)
-  extern char *timezone();
-#endif
 
   if (!clock) 
     time(&clock);
   ltbuf = localtime(&clock);
   gettimeofday(&tp, &tzp);
 
-#if HPUX || AIX
   tzset();
   timezonename = tzname[ltbuf->tm_isdst];
-#else
-  timezonename = timezone(tzp.tz_minuteswest, ltbuf->tm_isdst);
-#endif
 
   sprintf(buf, "%s %s %d 19%02d -- %02d:%02d %s",
 	  weekdays[ltbuf->tm_wday], months[ltbuf->tm_mon],ltbuf->tm_mday,

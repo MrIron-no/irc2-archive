@@ -60,12 +60,20 @@ char conf_id[] = "conf.c v2.0 (c) 1988 University of Oulu, Computing Center and 
 #include "common.h"
 #include "sys.h"
 #include "numeric.h"
+#include <time.h> // for struct tm, time, localtime
 
 aConfItem *conf = NULL;
 
 extern int portnum;
 extern char *configfile;
 extern long nextconnect;
+
+void debug(int, const char *, ...);
+int detach_conf(aClient *, aConfItem *);
+int matches(const char *, const char *);
+int mycmp(const char *, const char *);
+int initconf(void);
+int check_time_interval(char*, char*);
 
 char *MyMalloc(x)
 int x;
@@ -107,7 +115,7 @@ static aConfItem *make_conf()
 	return (cptr);
     }
 
-static free_conf(aconf)
+static int free_conf(aconf)
 aConfItem *aconf;
     {
 	MyFree(aconf->host);
@@ -122,7 +130,7 @@ aConfItem *aconf;
  *   Removes all configuration fields except one from the client
  *
  */
-det_confs_butone(cptr, aconf)
+int det_confs_butone(cptr, aconf)
 aClient *cptr;
 aConfItem *aconf;
 {
@@ -131,7 +139,7 @@ aConfItem *aconf;
   while (tmp && tmp->value == (char *) aconf)
     tmp = tmp->next;
   while (tmp) {
-    detach_conf(cptr, tmp->value);
+    detach_conf(cptr, (aConfItem *)tmp->value);
     tmp = cptr->confs;
     while (tmp && tmp->value == (char *) aconf)
       tmp = tmp->next;
@@ -142,7 +150,7 @@ aConfItem *aconf;
  * remove all conf entries from the client except those which match
  * the status field mask.
  */
-det_confs_butmask(cptr, mask)
+int det_confs_butmask(cptr, mask)
 aClient *cptr;
 int mask;
 {
@@ -151,14 +159,14 @@ int mask;
   while (tmp && tmp->value) {
     tmp2 = tmp->next;
     if ( ( ((aConfItem *)tmp->value)->status & mask) == 0)
-      detach_conf(cptr, tmp->value);
+      detach_conf(cptr, (aConfItem *)tmp->value);
     tmp = tmp2;
   }
 }
 /*
  * remove all attached I lines except for the first one.
  */
-det_I_lines_butfirst(cptr)
+int det_I_lines_butfirst(cptr)
 aClient *cptr;
 {
   Reg1 Link *tmp, *tmp2;
@@ -168,9 +176,9 @@ aClient *cptr;
     tmp2 = tmp->next;
     if ( ((aConfItem *)tmp->value)->status == CONF_CLIENT)
       if (first)
-	detach_conf(cptr, tmp->value);
+        detach_conf(cptr, (aConfItem *)tmp->value);
       else
-	first = tmp;
+        first = tmp;
     tmp = tmp2;
   }
 }
@@ -180,7 +188,7 @@ aClient *cptr;
 **	Disassociate configuration from the client.
 **      Also removes a class from the list if marked for deleting.
 */
-detach_conf(cptr, aconf)
+int detach_conf(cptr, aconf)
 aClient *cptr;
 aConfItem *aconf;
 {
@@ -234,7 +242,7 @@ aClient *cptr;
 **	connection). Note, that this automaticly changes the
 **	attachment if there was an old one...
 */
-attach_conf(aconf,cptr)
+int attach_conf(aconf,cptr)
 aConfItem *aconf;
 aClient *cptr;
 {
@@ -346,7 +354,7 @@ int statmask;
   return(link ? tmp : (aConfItem *) 0);
 }
 
-rehash()
+int rehash()
     {
 	Reg1 aConfItem *tmp = conf, *tmp2;
 	Reg2 aClass *cltmp, *cltmp2;
@@ -394,7 +402,7 @@ extern char *getfield();
 
 #define MAXCONFLINKS 150
 
-initconf()
+int initconf()
     {
 	FILE *fd;
 	char line[256], *tmp, type, c[80];
@@ -572,7 +580,6 @@ int find_kill(host, name, reply)
 char *host, *name, *reply;
     {
 	aConfItem *tmp;
-	static int check_time_interval();
 	int rc = ERR_YOUREBANNEDCREEP;
 
 	if (strlen(host)  > HOSTLEN || (name ? strlen(name) : 0) > HOSTLEN)
@@ -647,7 +654,7 @@ char *host, *name, *reply;
 ** check against a set of time intervals
 */
 
-static int check_time_interval(interval, reply)
+int check_time_interval(interval, reply)
 char	*interval, *reply;
 {
 	struct tm *tptr;

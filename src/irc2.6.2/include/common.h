@@ -29,6 +29,8 @@
  *
  */
 
+#include <stdlib.h>
+
 #ifndef PROTO
 #if __STDC__
 #	define PROTO(x)	x
@@ -52,8 +54,8 @@
 #define FALSE (0)
 #define TRUE  (!FALSE)
 
-extern char *malloc();
-extern void free();
+//extern char *malloc();
+//extern void free();
 
 #if NEED_INET_ADDR
 extern unsigned long inet_addr PROTO((char *));
@@ -74,7 +76,7 @@ extern int inet_netof PROTO((struct in_addr));
 
 extern long time();
 extern char *myctime PROTO((long));
-extern char *strtoken PROTO((char **, char *, char *));
+extern char *strtoken PROTO((char **, char *, const char *));
 
 #define MAX(a, b)	((a) > (b) ? (a) : (b))
 #define MIN(a, b)	((a) < (b) ? (a) : (b))

@@ -52,6 +52,8 @@ char s_msg_id[] = "s_msg.c v2.0 (c) 1988 University of Oulu, Computing Center an
 #include "numeric.h"
 #include "whowas.h"
 #include "channel.h"
+#include "global.h"
+#include <errno.h>
 
 extern aClient *client, me, *local[];
 extern aClient *find_server(), *find_person();
@@ -65,6 +67,32 @@ extern char *debugmode;
 extern char *configfile;
 extern int maxusersperchannel;
 extern int autodie, highest_fd;
+extern char *irc_strerror(int err_no);
+
+// ... existing code ...
+
+void report_error(text, host, errtmp)
+char *text;
+char *host;
+int errtmp;
+{
+  debug(DEBUG_ERROR,text,host,irc_strerror(errtmp));
+  sendto_ops(text,host,irc_strerror(errtmp));
+}
+
+// ... existing code ...
+
+void report_error_with_conf(text, aconf, retval)
+char *text;
+aConfItem *aconf;
+int retval;
+{
+  debug(DEBUG_ERROR, text,
+	aconf->name, aconf->host, irc_strerror(retval));
+}
+
+/* Forward declarations */
+static int ExitOneClient(aClient *cptr, aClient *sptr, aClient *from, char *comment);
 
 #define BIGBUFFERSIZE 2000
 
@@ -348,7 +376,7 @@ char *nick;
        sendto_serv_butone(to, ":%s USER %s %s %s :%s",\
 			  nick, username, host, server, info)
 
-static RegisterUser(cptr,sptr,nick)
+static int RegisterUser(cptr,sptr,nick)
 aClient *cptr;
 aClient *sptr;
 char *nick;
@@ -400,7 +428,7 @@ char *nick;
 **	parv[0] = sender prefix
 **	parv[1] = nickname
 */
-m_nick(cptr, sptr, parc, parv)
+int m_nick(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -660,7 +688,7 @@ int notice;
 **	parv[2] = message text
 */
 
-m_private(cptr, sptr, parc, parv)
+int m_private(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -747,7 +775,7 @@ aChannel *repchan;
 **	parv[0] = sender prefix
 **	parv[1] = nickname mask list
 */
-m_who(cptr, sptr, parc, parv)
+int m_who(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -838,7 +866,7 @@ char *parv[];
 **	parv[0] = sender prefix
 **	parv[1] = nickname masklist
 */
-m_whois(cptr, sptr, parc, parv)
+int m_whois(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -886,7 +914,7 @@ char *parv[];
 		  NULL,	/* channel */
 		  NULL,   /* invited */
 		  1,      /* refcount */
-		  NULL,	/* away */
+		  0,	/* away */
 		};
 	      Reg3 anUser *user;
 	      
@@ -998,7 +1026,7 @@ char *parv[];
 **	parv[3] = server host name (used only from other servers)
 **	parv[4] = users real name info
 */
-m_user(cptr, sptr, parc, parv)
+int m_user(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -1057,7 +1085,7 @@ char *parv[];
 	    {
 /*	      SendUser(cptr, sptr->name, "zombie", host,
 		       me.name, "*** active K-line ***"); */
-	      return;
+	      return 0;
 	    }
 	}
 #ifdef R_LINES
@@ -1088,7 +1116,7 @@ char *parv[];
 **	parv[0] = sender prefix
 **      parv[1] = channel
 */
-m_list(cptr, sptr, parc, parv)
+int m_list(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -1128,7 +1156,7 @@ char *parv[];
 **	parv[0] = sender prefix
 **	parv[1] = topic text
 */
-m_topic(cptr, sptr, parc, parv)
+int m_topic(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -1191,7 +1219,7 @@ char *parv[];
 **	parv[1] - user to invite
 **	parv[2] - channel number
 */
-m_invite(cptr, sptr, parc, parv)
+int m_invite(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -1270,7 +1298,7 @@ char *parv[];
 **	parv[0] = sender prefix
 **	parv[1] = remote server
 */
-m_version(cptr, sptr, parc, parv)
+int m_version(cptr, sptr, parc, parv)
 aClient *sptr, *cptr;
 int parc;
 char *parv[];
@@ -1286,7 +1314,7 @@ char *parv[];
 **	parv[0] = sender prefix
 **	parv[1] = comment
 */
-m_quit(cptr, sptr, parc, parv)
+int m_quit(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -1302,7 +1330,7 @@ char *parv[];
 **	parv[1] = server name
 **	parv[2] = comment
 */
-m_squit(cptr, sptr, parc, parv)
+int m_squit(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -1391,7 +1419,7 @@ char *parv[];
 **	parv[1] = servername
 **	parv[2] = serverinfo
 */
-m_server(cptr, sptr, parc, parv)
+int m_server(cptr, sptr, parc, parv)
      aClient *cptr, *sptr;
      int parc;
      char *parv[];
@@ -1707,7 +1735,7 @@ m_server(cptr, sptr, parc, parv)
 **	parv[1] = kill victim
 **	parv[2] = kill path
 */
-m_kill(cptr, sptr, parc, parv)
+int m_kill(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -1832,7 +1860,7 @@ char *parv[];
 **	parv[0] = sender prefix
 **	parv[1] = servername
 */
-m_info(cptr, sptr, parc, parv)
+int m_info(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -1864,7 +1892,7 @@ char *parv[];
 **	parv[1] = servername mask
 **      parv[2] = server to query
 */
-m_links(cptr, sptr, parc, parv)
+int m_links(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -1905,7 +1933,7 @@ char *parv[];
 **	parv[0] = sender prefix
 **	parv[1] = user%client@servername
 */
-m_summon(cptr, sptr, parc, parv)
+int m_summon(cptr, sptr, parc, parv)
 aClient *sptr, *cptr;
 int parc;
 char *parv[];
@@ -1991,7 +2019,7 @@ char *parv[];
 **    Note:   The info is reported in the order the server uses
 **            it--not reversed as in ircd.conf!
 */
-static ReportConfiguredLinks(cptr, sptr)
+static int ReportConfiguredLinks(cptr, sptr)
 aClient *cptr, *sptr;
 {
   aConfItem *tmp;
@@ -2016,7 +2044,7 @@ aClient *cptr, *sptr;
   return 0;
 }
 
-m_stats(cptr, sptr, parc, parv)
+int m_stats(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -2075,7 +2103,7 @@ char *parv[];
 **	parv[0] = sender prefix
 **	parv[1] = servername
 */
-m_users(cptr, sptr, parc, parv)
+int m_users(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -2142,7 +2170,6 @@ char *comment;	/* Reason for the exit */
     {
 	Reg1 aClient *acptr;
 	Reg2 aClient *next;
-	static int ExitOneClient();
 
 	if (MyConnect(sptr))
 	    {
@@ -2217,7 +2244,7 @@ char *comment;	/* Reason for the exit */
 ** Exit one client, local or remote. Assuming all dependants have
 ** been already removed, and socket closed for local client.
 */
-static ExitOneClient(cptr, sptr, from, comment)
+static int ExitOneClient(cptr, sptr, from, comment)
 aClient *sptr;
 aClient *cptr;
 aClient *from;
@@ -2320,7 +2347,7 @@ char *comment;
 **	parv[0] = sender prefix
 **	parv[*] = parameters
 */
-m_error(cptr, sptr, parc, parv)
+int m_error(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -2351,7 +2378,7 @@ char *parv[];
 ** m_help
 **	parv[0] = sender prefix
 */
-m_help(cptr, sptr, parc, parv)
+int m_help(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -2363,7 +2390,7 @@ char *parv[];
 	return 0;
     }
 
-m_restart(cptr, sptr, parc, parv)
+int m_restart(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -2372,7 +2399,7 @@ char *parv[];
 		restart();
     }
 
-m_die(cptr, sptr, parc, parv)
+int m_die(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -2382,7 +2409,7 @@ char *parv[];
 	}
     }
 
-m_lusers(cptr, sptr, parc, parv)
+int m_lusers(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -2458,7 +2485,7 @@ char *parv[];
 **	parv[0] = sender prefix
 **	parv[1] = away message
 */
-m_away(cptr, sptr, parc, parv)
+int m_away(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -2510,7 +2537,7 @@ char *parv[];
 **	parv[2] = port number
 **	parv[3] = remote server
 */
-m_connect(cptr, sptr, parc, parv)
+int m_connect(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -2625,7 +2652,7 @@ char *parv[];
 **	parv[1] = origin
 **	parv[2] = destination
 */
-m_ping(cptr, sptr, parc, parv)
+int m_ping(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -2663,7 +2690,7 @@ char *parv[];
 **	parv[1] = origin
 **	parv[2] = destination
 */
-m_pong(cptr, sptr, parc, parv)
+int m_pong(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -2702,7 +2729,7 @@ char *parv[];
 **	parv[1] = oper name
 **	parv[2] = oper password
 */
-m_oper(cptr, sptr, parc, parv)
+int m_oper(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -2776,7 +2803,7 @@ char *parv[];
 **	parv[0] = sender prefix
 **	parv[1] = password
 */
-m_pass(cptr, sptr, parc, parv)
+int m_pass(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -2806,7 +2833,7 @@ char *parv[];
 **	parv[0] = sender prefix
 **	parv[1] = message text
 */
-m_wall(cptr, sptr, parc, parv)
+int m_wall(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -2839,7 +2866,7 @@ char *parv[];
 **	parv[0] = sender prefix
 **	parv[1] = message text
 */
-m_wallops(cptr, sptr, parc, parv)
+int m_wallops(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -2864,7 +2891,7 @@ char *parv[];
 **	parv[0] = sender prefix
 **	parv[1] = servername
 */
-m_time(cptr, sptr, parc, parv)
+int m_time(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -2876,7 +2903,7 @@ char *parv[];
 	return 0;
     }
 
-m_rehash(cptr, sptr, parc, parv)
+int m_rehash(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -2920,7 +2947,7 @@ char *parv[];
 **	parv[0] = sender prefix
 **	parv[1] = channel
 */
-m_names(cptr, sptr, parc, parv)
+int m_names(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -3035,7 +3062,7 @@ char *parv[];
 **	parv[0] = sender prefix
 **	parv[1] = servername
 */
-m_admin(cptr, sptr, parc, parv)
+int m_admin(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -3068,7 +3095,7 @@ char *parv[];
 **	parv[0] = sender prefix
 **	parv[1] = servername
 */
-m_trace(cptr, sptr, parc, parv)
+int m_trace(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -3172,7 +3199,7 @@ char *parv[];
 **	parv[0] = sender prefix
 **	parv[1] = servername
 */
-m_motd(cptr, sptr, parc, parv)
+int m_motd(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -3216,7 +3243,7 @@ char *parv[];
 ** parv[1] - service name
 ** parv[2] - service password
 */
-m_service(cptr, sptr, parc, parv)
+int m_service(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -3270,7 +3297,7 @@ char *parv[];
   return 0;
 }
 
-m_whoreply(cptr, sptr, parc, parv)
+int m_whoreply(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -3278,7 +3305,7 @@ char *parv[];
     return m_error(cptr, sptr, parc, parv);
 }
 
-m_namreply(cptr, sptr, parc, parv)
+int m_namreply(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -3286,7 +3313,7 @@ char *parv[];
     return m_error(cptr, sptr, parc, parv);
 }
 
-m_linreply(cptr, sptr, parc, parv)
+int m_linreply(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -3299,7 +3326,7 @@ char *parv[];
  * the need for complicated requests like WHOIS. It returns user/host
  * information only (no spurious AWAY labels or channels).
  */
-m_userhost(cptr, sptr, parc, parv)
+int m_userhost(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -3344,7 +3371,7 @@ char *parv[];
  * ISON :nicklist
  */
 
-m_ison(cptr, sptr, parc, parv)
+int m_ison(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];

@@ -45,11 +45,21 @@
 
 char channel_id[] = "channel.c v2.0 (c) 1990 University of Oulu, Computing Center and Jarkko Oikarinen";
 
+#include <stdio.h>
+#include <string.h>
 #include "struct.h"
 #include "sys.h"
 #include "common.h"
 #include "numeric.h"
 #include "channel.h"
+
+void sendto_one(aClient *to, char *pattern, ...);
+void sendto_serv_butone(aClient *one, char *pattern, ...);
+void sendto_channel_butserv(aChannel *chptr, char *pattern, ...);
+void debug(int level, char *pattern, ...);
+void addToChannelHashTable(char *name, aChannel *chptr);
+void delFromChannelHashTable(char *name, aChannel *chptr);
+void m_names(aClient *cptr, aClient *sptr, int parc, char *parv[]);
 
 aChannel *channel = NullChn;
 
@@ -202,7 +212,7 @@ aChannel *para;
   return ch2ptr ? ch2ptr : para;
 }
 
-ChannelModes(modebuf, chptr)
+int ChannelModes(modebuf, chptr)
 char *modebuf;
 aChannel *chptr;
 {
@@ -227,7 +237,7 @@ aChannel *chptr;
     sprintf(&(modebuf[strlen(modebuf)]), "l %d", chptr->mode.limit);
 }
 
-m_mode(cptr, sptr, parc, parv)
+int m_mode(cptr, sptr, parc, parv)
 aClient *cptr;
 aClient *sptr;
 int parc;
@@ -625,7 +635,7 @@ aChannel *xchptr;
 **	parv[0] = sender prefix
 **	parv[1] = channel
 */
-m_join(cptr, sptr, parc, parv)
+int m_join(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -727,7 +737,7 @@ char *parv[];
 **	parv[0] = sender prefix
 **	parv[1] = channel
 */
-m_part(cptr, sptr, parc, parv)
+int m_part(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];
@@ -779,7 +789,7 @@ char *parv[];
 **	parv[0] = sender prefix
 **	parv[1] = channel
 */
-m_kick(cptr, sptr, parc, parv)
+int m_kick(cptr, sptr, parc, parv)
 aClient *cptr, *sptr;
 int parc;
 char *parv[];

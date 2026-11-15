@@ -35,6 +35,10 @@ char packet_id[]="packet.c v2.0 (c) 1988 University of Oulu, Computing Center an
 #include "struct.h"
 #include "common.h"
 #include "msg.h"
+
+/* Forward declarations */
+int parse(aClient *cptr, char *buffer, int length, struct Message *msgtab);
+
 extern aClient me;
  
 /*
@@ -43,7 +47,7 @@ extern aClient me;
 **	with cptr of "local" variation, which contains all the
 **	necessary fields (buffer etc..)
 */
-dopacket(cptr, buffer, length)
+int dopacket(cptr, buffer, length)
 aClient *cptr;
 char *buffer;
 int length;

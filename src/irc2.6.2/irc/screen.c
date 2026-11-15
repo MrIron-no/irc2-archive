@@ -25,6 +25,14 @@ char screen_id[] = "screen.c v2.0 (c) 1988 University of Oulu, Computing Center 
 #include "struct.h"
 #include "common.h"
 
+/* Forward declarations */
+int record_line(void);
+int sendit(int sock, char *line);
+int clear_last_line(void);
+int bol(void);
+int tulosta_viimeinen_rivi(void);
+int get_disp(int paikka);
+
 #define SBUFSIZ 240
 
 #define FROM_START 0
@@ -44,7 +52,7 @@ int insert=1;  /* default to insert mode */
 
 extern int termtype;
 
-get_char(pos)
+int get_char(pos)
 int pos;
 {
     if (pos>=SBUFSIZ || pos<0)
@@ -52,7 +60,7 @@ int pos;
     return (int)last_line[pos];
 }
 
-set_char(pos, ch)
+int set_char(pos, ch)
 int pos, ch;
 {
     if (pos<0 || pos>=SBUFSIZ)
@@ -63,7 +71,7 @@ int pos, ch;
     return 0;
 }
 
-get_yank_char(pos)
+int get_yank_char(pos)
 int pos;
 {
     if (pos>=SBUFSIZ || pos<0)
@@ -71,7 +79,7 @@ int pos;
     return (int)yank_buffer[pos];
 }
 
-set_yank_char(pos, ch)
+int set_yank_char(pos, ch)
 int pos, ch;
 {
     if (pos<0 || pos>=SBUFSIZ)
@@ -82,7 +90,7 @@ int pos, ch;
     return 0;
 }
 
-set_position(disp, from)
+int set_position(disp, from)
 int disp, from;
 {
     int i1;
@@ -104,12 +112,12 @@ int disp, from;
     }
 }
 
-get_position()
+int get_position()
 {
     return position;
 }
 
-toggle_ins()
+int toggle_ins()
 {
     insert = !insert;
 #ifdef DOCURSES
@@ -128,12 +136,12 @@ toggle_ins()
 #endif
 }
 
-in_insert_mode()
+int in_insert_mode()
 {
     return insert;
 }
 
-send_this_line(sock)
+int send_this_line(int sock)
 {
     record_line();
     sendit(sock, last_line);
@@ -146,7 +154,7 @@ send_this_line(sock)
 #endif
 }
 
-record_line()
+int record_line()
 {
     static int place=0;
     int i1;
@@ -159,7 +167,7 @@ record_line()
     pos_in_history=place;
 }
     
-clear_last_line()
+int clear_last_line()
 {
     int i1;
 
@@ -167,7 +175,7 @@ clear_last_line()
 	set_char(i1,(int)'\0');
 }
 
-kill_eol()
+int kill_eol()
 {
     int i1, i2, i3;
 
@@ -183,7 +191,7 @@ kill_eol()
     set_position(i1, FROM_START);
 }
 
-next_in_history()
+int next_in_history()
 {
     int i1;
 
@@ -198,7 +206,7 @@ next_in_history()
     set_position(0, FROM_START);
 }
 
-previous_in_history()
+int previous_in_history()
 {
     int i1;
 
@@ -212,13 +220,13 @@ previous_in_history()
     set_position(0, FROM_START);
 }
 
-kill_whole_line()
+int kill_whole_line()
 {
     clear_last_line();
     set_position(0, FROM_START);
 }
 
-yank()
+int yank()
 {
     int i1, i2, i3;
     
@@ -233,7 +241,7 @@ yank()
 	set_char(i1+i3, get_yank_char(i3));
 }
 
-tulosta_viimeinen_rivi()
+int tulosta_viimeinen_rivi()
 {
     static int paikka=0;
     int i1, i2, i3;
@@ -275,8 +283,7 @@ tulosta_viimeinen_rivi()
     return (i1-get_disp(paikka));
 }
 
-get_disp(paikka)
-int paikka;
+int get_disp(int paikka)
 {
     static int place[]={0,55,110,165,220};
 

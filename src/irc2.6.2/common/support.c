@@ -30,6 +30,7 @@
  */
 
 #include <sys/errno.h>
+#include <string.h>
 #include "config.h"
 #include "common.h"
 #include "sys.h"
@@ -47,7 +48,8 @@ extern int errno; /* ...seems that errno.h doesn't define this everywhere */
 
 char *strtoken(save, str, fs)
 char **save;
-char *str, *fs;
+char *str;
+const char *fs;
 {
     char *pos = *save;	/* keep last position across calls */
     Reg1 char *tmp;
@@ -67,7 +69,7 @@ char *str, *fs;
 	pos++; 			/* skip content of the token */
 
     if (*pos)
-	*pos++ = NULL;		/* remove first sep after the token */
+	*pos++ = '\0';		/* remove first sep after the token */
     else
 	pos = NULL;		/* end of string */
 
@@ -80,7 +82,8 @@ char *str, *fs;
 */
 
 char *strtok(str, fs)
-char *str, *fs;
+char *str;
+const char *fs;
 {
     static char *pos;
 
@@ -91,20 +94,16 @@ char *str, *fs;
 
 #if NEED_STRERROR
 /*
-**	strerror - return an appropriate system error string to a given errno
+**	irc_strerror - return an appropriate system error string to a given errno
 **
 **		   argv 11/90
-**	$Id: support.c,v 6.1 1991/07/04 21:04:01 gruner stable gruner $
+**	$Id: support.c,v 6.1 1991/07/04  21:04:01 gruner stable gruner $
 */
 
-char *strerror(err_no)
+char *irc_strerror(err_no)
 int err_no;
 {
-    extern char *sys_errlist[];	 /* Sigh... hopefully on all systems */
-    extern int sys_nerr;
-
-    return(err_no > sys_nerr ? 
-	"Undefined system error" : sys_errlist[err_no]);
+    return strerror(err_no);  /* Use the standard strerror function */
 }
 
 #endif /* NEED_STRERROR */

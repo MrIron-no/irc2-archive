@@ -31,10 +31,13 @@
  */
 
 char c_numeric_id[] = "numeric.c (c) 1989 Jarkko Oikarinen";
-
+#include <stdio.h>
 #include "struct.h"
 #include "common.h"
 #include "numeric.h"
+
+void putline(const char *msg);
+void sendto_one(aClient *to, char *pattern, ...);
 
 extern char mybuf[];
 /*

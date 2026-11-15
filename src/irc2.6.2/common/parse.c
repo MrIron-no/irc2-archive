@@ -44,6 +44,10 @@ char parse_id[] = "parse.c v2.0 (c) 1988 University of Oulu, Computing Center an
 #undef MSGTAB
 #include "sys.h"
 #include "numeric.h"
+#include "global.h"
+
+/* Forward declarations */
+int DoNumeric(int numeric, aClient *cptr, aClient *from, int i, char **para);
 
 extern aClient *client;
 extern aClient *hash_find_client(), *hash_find_server();
@@ -224,7 +228,7 @@ aClient *cptr;
 		return cptr;
     }
 
-parse(cptr, buffer, length, mptr)
+int parse(cptr, buffer, length, mptr)
 aClient *cptr;
 char *buffer;
 int length;

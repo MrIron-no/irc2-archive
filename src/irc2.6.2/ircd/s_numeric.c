@@ -38,6 +38,8 @@ char numeric_id[] = "numeric.c (c) 1989 Jarkko Oikarinen";
 #include "sys.h" 
 #include "struct.h"
 #include "numeric.h"
+#include "global.h"
+#include "channel.h"  /* for NullChn */
 
 extern aClient *find_client();
 extern aChannel *find_channel();
@@ -103,7 +105,7 @@ char *parv[];
 			sendto_one(acptr,":%s %d %s%s", parv[0],
 				   numeric, nick, buffer);
 		    }
-		else if (chptr = find_channel(nick, (aClient *)NULL))
+		else if (chptr = find_channel(nick, NullChn))
 			sendto_channel_butone(cptr,chptr,":%s %d %s%s",
 					      parv[0],
 					      numeric, chptr->chname, buffer);

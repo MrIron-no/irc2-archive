@@ -36,8 +36,16 @@
 
 char send_id[] = "send.c v2.0 (c) 1988 University of Oulu, Computing Center and Jarkko Oikarinen";
 
+#include <stdio.h>
 #include "struct.h"
 #include "common.h"
+
+/* Forward declarations */
+int DeliverIt(int fd, char *str, int len);
+void debug(int level, const char *form, ...);
+int matches(const char *mask, const char *name);
+int sendto_ops(char *pattern, char *par1, char *par2, char *par3, char *par4, char *par5, char *par6, char *par7, char *par8);
+int IsMember(aClient *cptr, aChannel *chptr);
 
 #define NEWLINE  "\n"
 
@@ -64,19 +72,17 @@ extern aChannel *channel;
 **	Also, the notice is skipped for "uninteresting" cases,
 **	like Persons and yet unknown connections...
 */
-static int DeadLink(to,notice)
-aClient *to;
-char *notice;
-    {
+static int DeadLink(aClient *to, char *notice)
+{
 	to->flags |= FLAGS_DEADSOCKET;
 	if (notice != NULL && !IsPerson(to) && !IsUnknown(to))
 #ifndef CLIENT_COMPILE
-		sendto_ops(notice,to->sockhost);
+		sendto_ops(notice, to->sockhost, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 #else
 		;
 #endif
 	return 0;
-    }
+}
 
 /*
 ** SendMessage
@@ -84,10 +90,8 @@ char *notice;
 **	socket. Takes care of the error handling and buffering, if
 **	needed.
 */
-static SendMessage(to,msg,len)
-aClient *to;
-char *msg;
-    {
+static int SendMessage(aClient *to, char *msg, int len)
+{
 	int rlen = 0;
 
 	if (to->flags & FLAGS_DEADSOCKET)
@@ -99,7 +103,7 @@ char *msg;
 	    (rlen = DeliverIt(to->fd, msg, len)) < 0)
 		DeadLink(to,"Write error to %s, closing link");
 	else if (rlen < len)
-	    {
+	{
 		/*
 		** Was unable to transfer all of the requested data. Queue
 		** up the remainder for some later time...
@@ -108,7 +112,7 @@ char *msg;
 			DeadLink(to,"Max buffering limit exceed for %s");
 		else if (dbuf_put(&to->sendQ,msg+rlen,len-rlen) < 0)
 			DeadLink(to,"Buffer allocation error for %s");
-	    }
+	}
 
 	/*
 	** Update statistics. The following is slightly incorrect
@@ -120,7 +124,7 @@ char *msg;
 	to->sendB += rlen;
 	me.sendB += rlen;
 	return 0;
-    }
+}
 
 /*
 ** SendQueued
@@ -128,9 +132,8 @@ char *msg;
 **	when there is a chance the some output would be possible. This
 **	attempts to empty the send queue as far as possible...
 */
-SendQueued(to)
-aClient *to;
-    {
+int SendQueued(aClient *to)
+{
 	char *msg;
 	int len, rlen;
 
@@ -139,37 +142,36 @@ aClient *to;
 	** even if the error is removed...
 	*/
 	if (to->flags & FLAGS_DEADSOCKET)
-	    {
+	{
 		/* Actually, we should *NEVER* get here--something is
 		   not working correct if SendQueued is called for a
 		   dead socket... --msa */
 		DeadLink(to,"SendQueued called for a DEADSOCKET %s :-(");
 		dbuf_delete(&to->sendQ, dbuf_length(&to->sendQ));
 		return 0;
-	    }
+	}
 	while (dbuf_length(&to->sendQ) > 0)
-	    {
+	{
 		msg = dbuf_map(&to->sendQ, (long *)&len);
 					/* Returns always len > 0 */
 		if ((rlen = DeliverIt(to->fd, msg, len)) < 0)
-		    {
+		{
 			DeadLink(to,"Write error to %s, closing link");
 			break;
-		    }
+		}
 		dbuf_delete(&to->sendQ, rlen);
 		to->sendB += rlen;
 		me.sendB += rlen;
 		if (rlen < len) /* ..or should I continue until rlen==0? */
 			break;
-	    }
-    }
+	}
+	return 0;
+}
 
 /*
 ** send message to single client
 */
-sendto_one(to, pattern, par1, par2, par3, par4, par5, par6, par7, par8)
-aClient *to;
-char *pattern, *par1, *par2, *par3, *par4, *par5, *par6, *par7, *par8;
+int sendto_one(aClient *to, char *pattern, char *par1, char *par2, char *par3, char *par4, char *par5, char *par6, char *par7, char *par8)
 {
 #if VMS
   extern int goodbye;
@@ -188,44 +190,41 @@ char *pattern, *par1, *par2, *par3, *par4, *par5, *par6, *par7, *par8;
 	  to->name);
   else
     SendMessage(to, sendbuf, strlen(sendbuf));
+  return 0;
 }
 
 #ifndef CLIENT_COMPILE
-sendto_channel_butone(one, channel, pattern,
-		      par1, par2, par3, par4, par5, par6, par7, par8)
-aClient *one;
-char *pattern, *par1, *par2, *par3, *par4, *par5, *par6, *par7, *par8;
-aChannel *channel;
+int sendto_channel_butone(aClient *one, aChannel *channel, char *pattern,
+			  char *par1, char *par2, char *par3, char *par4, char *par5, char *par6, char *par7, char *par8)
 {
   int sentalong[MAXCONNECTIONS], i;
   Link *link, *tmplink;
   for (i = 0; i < MAXCONNECTIONS; i++)
     sentalong[i] = 0;
   for (link = channel->members; link; link = link->next)
-    {
-      if ((((aClient *) link->value)->from) == one)
-	continue;	/* ...was the one I should skip */
-      i = ((aClient *)link->value)->from->fd;
-      if (MyConnect(((aClient *)link->value)) &&
-	  IsRegisteredUser((aClient *)link->value)) {
-	sendto_one(link->value, pattern,
+  {
+    if ((((aClient *) link->value)->from) == one)
+      continue;	/* ...was the one I should skip */
+    i = ((aClient *)link->value)->from->fd;
+    if (MyConnect(((aClient *)link->value)) &&
+	IsRegisteredUser((aClient *)link->value)) {
+      sendto_one((aClient *)link->value, pattern,
+		 par1, par2, par3, par4, par5, par6, par7, par8);
+      sentalong[i] = 1;
+    } else {  /* Now check whether a message has been sent to this
+		 remote link already */
+      if (sentalong[i] == 0) {
+	sendto_one((aClient *)link->value, pattern,
 		   par1, par2, par3, par4, par5, par6, par7, par8);
 	sentalong[i] = 1;
-      } else {  /* Now check whether a message has been sent to this
-		   remote link already */
-	if (sentalong[i] == 0) {
-	  sendto_one(link->value, pattern,
-		     par1, par2, par3, par4, par5, par6, par7, par8);
-	  sentalong[i] = 1;
-	}
       }
     }
+  }
+  return 0;
 }
 
-sendto_serv_butone(one, pattern, par1, par2, par3, par4, par5, par6,
-		   par7, par8)
-aClient *one;
-char *pattern, *par1, *par2, *par3, *par4, *par5, *par6, *par7, *par8;
+int sendto_serv_butone(aClient *one, char *pattern, char *par1, char *par2, char *par3, char *par4, char *par5, char *par6,
+			   char *par7, char *par8)
 {
   Reg1 int i;
   Reg2 aClient *cptr;
@@ -233,16 +232,15 @@ char *pattern, *par1, *par2, *par3, *par4, *par5, *par6, *par7, *par8;
     if ((cptr = local[i]) && IsServer(cptr) && cptr != one)
       sendto_one(cptr, pattern,
 		 par1, par2, par3, par4, par5, par6, par7, par8);
+  return 0;
 }
 
 /* sendto_common_channels()
  * Sends a message to all people (inclusing user) on local server who are
  * in same channel with user.
  */
-sendto_common_channels(user, pattern,
-		       par1, par2, par3, par4, par5, par6, par7, par8)
-aClient *user;
-char *pattern, *par1, *par2, *par3, *par4, *par5, *par6, *par7, *par8;
+int sendto_common_channels(aClient *user, char *pattern,
+			   char *par1, char *par2, char *par3, char *par4, char *par5, char *par6, char *par7, char *par8)
 {
   Reg1 int i;
   Reg2 aClient *cptr;
@@ -262,19 +260,19 @@ char *pattern, *par1, *par2, *par3, *par4, *par5, *par6, *par7, *par8;
   if (MyConnect(user))
     sendto_one(user, pattern, par1, par2, par3, par4,
 	       par5, par6, par7, par8);
+  return 0;
 }
 #endif
-sendto_channel_butserv(channel, pattern,
-		       par1, par2, par3, par4, par5, par6, par7, par8)
-aChannel *channel;
-char *pattern, *par1, *par2, *par3, *par4, *par5, *par6, *par7, *par8;
+int sendto_channel_butserv(aChannel *channel, char *pattern,
+			   char *par1, char *par2, char *par3, char *par4, char *par5, char *par6, char *par7, char *par8)
 {
   Link *link;
   for (link = channel->members; link; link = link->next) {
-    if (MyConnect(((aClient *) link->value)))
-      sendto_one(link->value, pattern,
+    if (MyConnect(((aClient *)link->value)))
+      sendto_one((aClient *)link->value, pattern,
 		 par1, par2, par3, par4, par5, par6, par7, par8);
   }
+  return 0;
 }
 
 /*
@@ -284,10 +282,7 @@ char *pattern, *par1, *par2, *par3, *par4, *par5, *par6, *par7, *par8;
 ** addition -- Armin, 8jun90 (gruner@informatik.tu-muenchen.de)
 */
 
-static int match_it(one, mask, what)
-     aClient *one;
-     char *mask;
-     int what;
+static int match_it(aClient *one, char *mask, int what)
 {
   switch (what)
     {
@@ -300,12 +295,8 @@ static int match_it(one, mask, what)
 }
 
 #ifndef CLIENT_COMPILE
-sendto_match_butone(one, mask, what, pattern, par1, par2, par3, par4, par5,
-		    par6, par7, par8)
-     aClient *one;
-     int what;
-     char *mask, *pattern, *par1, *par2, *par3, *par4, *par5, *par6;
-     char *par7, *par8;
+int sendto_match_butone(aClient *one, int what, char *mask, char *pattern, char *par1, char *par2, char *par3, char *par4, char *par5,
+		    char *par6, char *par7, char *par8)
 {
   Reg1 int i;
   Reg2 aClient *cptr, *acptr;
@@ -341,12 +332,11 @@ sendto_match_butone(one, mask, what, pattern, par1, par2, par3, par4, par5,
       sendto_one(cptr, pattern,
 			   par1, par2, par3, par4, par5, par6, par7, par8);
     }
+  return 0;
 }
 
-sendto_all_butone(one, pattern, par1, par2, par3, par4, par5,
-                  par6, par7, par8)
-aClient *one;
-char *pattern, *par1, *par2, *par3, *par4, *par5, *par6, *par7, *par8;
+int sendto_all_butone(aClient *one, char *pattern, char *par1, char *par2, char *par3, char *par4, char *par5,
+                  char *par6, char *par7, char *par8)
 {
   Reg1 int i;
   Reg2 aClient *cptr;
@@ -354,14 +344,14 @@ char *pattern, *par1, *par2, *par3, *par4, *par5, *par6, *par7, *par8;
     if ((cptr = local[i]) && !IsMe(cptr) && one != cptr)
       sendto_one(cptr, pattern,
 		 par1, par2, par3, par4, par5, par6, par7, par8);
+  return 0;
 }
 
 /*
 ** sendto_ops
 **	Send to *local* ops only.
 */
-sendto_ops(pattern, par1, par2, par3, par4, par5, par6, par7, par8)
-char *pattern, *par1, *par2, *par3, *par4, *par5, *par6, *par7, *par8;
+int sendto_ops(char *pattern, char *par1, char *par2, char *par3, char *par4, char *par5, char *par6, char *par7, char *par8)
 {
   Reg1 aClient *cptr;
   Reg2 int i;
@@ -369,23 +359,22 @@ char *pattern, *par1, *par2, *par3, *par4, *par5, *par6, *par7, *par8;
 
   for (i = 0; i <= highest_fd; i++)
     if ((cptr = local[i]) && IsAnOper(cptr))
-      {
-	sprintf(buf, "NOTICE %s :*** Notice -- ", cptr->name);
-	strncat(buf, pattern, sizeof(buf) - strlen(buf));
-	sendto_one(cptr, buf,
-		   par1, par2, par3, par4, par5, par6, par7, par8);
-      }
+    {
+      sprintf(buf, "NOTICE %s :*** Notice -- ", cptr->name);
+      strncat(buf, pattern, sizeof(buf) - strlen(buf));
+      sendto_one(cptr, buf,
+		 par1, par2, par3, par4, par5, par6, par7, par8);
+    }
+  return 0;
 }
 
 /*
 ** sendto_ops_butone
 **	Send message to all operators.
 */
-sendto_ops_butone(one, pattern,
-		      par1, par2, par3, par4, par5, par6, par7, par8)
-aClient *one;
-char *pattern, *par1, *par2, *par3, *par4, *par5, *par6, *par7, *par8;
-    {
+int sendto_ops_butone(aClient *one, char *pattern,
+		      char *par1, char *par2, char *par3, char *par4, char *par5, char *par6, char *par7, char *par8)
+{
 	Reg1 int i;
 	Reg2 aClient *cptr;
 	int sent[MAXCONNECTIONS];
@@ -393,7 +382,7 @@ char *pattern, *par1, *par2, *par3, *par4, *par5, *par6, *par7, *par8;
 	for (i=0; i<highest_fd; i++)
 		sent[i] = 0;
 	for (cptr = client; cptr; cptr = cptr->next)
-	    {
+	{
 		if (!IsOper(cptr))
 			continue;
 		if (sent[i = cptr->from->fd])
@@ -403,6 +392,7 @@ char *pattern, *par1, *par2, *par3, *par4, *par5, *par6, *par7, *par8;
 		sent[i] = 1;
       		sendto_one(cptr, pattern,
 			   par1, par2, par3, par4, par5, par6, par7, par8);
-	    }
-    }
+	}
+	return 0;
+}
 #endif

@@ -118,7 +118,7 @@
  * this.
  */
 
-#define ENABLE_SUMMON /* local summon */
+#undef ENABLE_SUMMON /* local summon */
  
 /* MAXIMUM LINKS
  *
